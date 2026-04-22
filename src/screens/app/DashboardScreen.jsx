@@ -1,6 +1,7 @@
 import React from 'react';
 import {Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import {AppAvatar, AppCard} from '@/components/ui';
 
@@ -65,24 +66,35 @@ export const DashboardScreen = () => {
     <SafeAreaView className="flex-1 bg-background">
       <ScrollView
         bounces={false}
-        contentContainerClassName="flex-grow px-6 py-8 gap-6"
+        contentContainerClassName="flex-grow px-5 py-5 gap-6"
         showsVerticalScrollIndicator={false}>
-        <View className="flex-row items-center gap-3">
-          <AppAvatar className="border border-white" name="Sara" size="md" variant="accent" />
-          <View className="flex-1">
-            <Text className="text-[34px] leading-[38px] font-bold tracking-[-0.5px] text-textPrimary">
+        <View className="gap-3">
+          <View className="flex-row items-center justify-between">
+            <AppAvatar
+              className="border-2 border-white"
+              name="Sara"
+              size="sm"
+              variant="accent"
+            />
+
+            <Pressable
+              className="h-10 w-10 items-center justify-center rounded-full bg-primary-500"
+              hitSlop={8}>
+              <Ionicons color="#ffffff" name="notifications-outline" size={18} />
+            </Pressable>
+          </View>
+
+          <View>
+            <Text className="text-[25px] leading-[30px] font-bold text-textPrimary">
               Hello, Sara
             </Text>
-            <Text className="mt-1 text-body font-normal text-textSecondary">
+            <Text className="mt-0.5 text-[13px] leading-[18px] font-semibold text-textPrimary">
               You have 3 balances to review
             </Text>
           </View>
-          <View className="h-10 w-10 items-center justify-center rounded-full bg-primary-500/15">
-            <Text className="text-lg text-primary-600">+</Text>
-          </View>
         </View>
 
-        <View className="flex-row gap-3">
+        <View className="flex-row items-end gap-3">
           {summaryCards.map(card => (
             <DashboardSummaryCard key={card.id} {...card} />
           ))}

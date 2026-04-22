@@ -1,10 +1,20 @@
 import React from 'react';
 import {ActivityIndicator, View} from 'react-native';
 
-import {colorPalette, loaderStyles} from '@/design-system';
 import {cn} from '@/utils/cn';
 
 import {AppText} from './AppText';
+
+const colorPalette = {
+  primary: '#203049',
+};
+
+const loaderStyles = {
+  base: 'items-center justify-center gap-3',
+  inline: 'py-4',
+  fullscreen: 'flex-1',
+  card: 'rounded-[24px] border border-border bg-surface px-5 py-6',
+};
 
 export const AppLoader = ({
   label = 'Loading...',

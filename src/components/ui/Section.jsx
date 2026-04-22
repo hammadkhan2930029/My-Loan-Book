@@ -1,10 +1,14 @@
 import React from 'react';
 import {View} from 'react-native';
 
-import {sectionStyles} from '@/design-system';
 import {cn} from '@/utils/cn';
 
 import {AppText} from './AppText';
+
+const sectionStyles = {
+  container: 'gap-4',
+  titleGroup: 'gap-1',
+};
 
 export const Section = ({title, subtitle, children, className, ...props}) => {
   return (

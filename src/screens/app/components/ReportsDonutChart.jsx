@@ -20,7 +20,7 @@ export const ReportsDonutChart = ({gave, took, total}) => {
           cy={size / 2}
           fill="none"
           r={radius}
-          stroke="#f0ebf7"
+          stroke="#eef2f6"
           strokeWidth={strokeWidth}
         />
         <Circle
@@ -29,7 +29,7 @@ export const ReportsDonutChart = ({gave, took, total}) => {
           fill="none"
           r={radius}
           rotation="-90"
-          stroke="#9442f1"
+          stroke="#203049"
           strokeDasharray={`${circumference} ${circumference}`}
           strokeDashoffset={gaveOffset}
           strokeLinecap="round"
@@ -42,7 +42,7 @@ export const ReportsDonutChart = ({gave, took, total}) => {
           fill="none"
           r={radius}
           rotation={gavePercent * 360 - 90}
-          stroke="#e5e844"
+          stroke="#EC7418"
           strokeDasharray={`${circumference} ${circumference}`}
           strokeDashoffset={tookOffset}
           strokeLinecap="round"

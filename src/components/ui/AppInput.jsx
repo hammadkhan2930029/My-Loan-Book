@@ -1,10 +1,33 @@
 import React from 'react';
 import {TextInput, View} from 'react-native';
 
-import {colorPalette, inputVariants} from '@/design-system';
 import {cn} from '@/utils/cn';
 
 import {AppText} from './AppText';
+
+const colorPalette = {
+  textMuted: '#8a97a8',
+};
+
+const inputVariants = {
+  wrapper: 'gap-2.5',
+  fieldBase: 'min-h-[56px] flex-row items-center border px-4',
+  shape: 'rounded-[24px]',
+  variants: {
+    default: 'bg-surface border-border',
+    filled: 'bg-surfaceMuted border-transparent',
+    quiet: 'bg-transparent border-border',
+  },
+  states: {
+    error: 'border-danger',
+    focused: 'border-primary-300 bg-surfaceElevated',
+    disabled: 'opacity-60',
+  },
+  inputText: 'text-body font-normal flex-1 py-4 text-textPrimary',
+  inputMultiline: 'min-h-[120px] py-4 text-top',
+  helper: 'pl-1 text-textMuted',
+  error: 'pl-1 text-danger',
+};
 
 export const AppInput = ({
   label,

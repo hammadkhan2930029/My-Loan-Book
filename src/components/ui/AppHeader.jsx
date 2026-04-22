@@ -1,10 +1,18 @@
 import React from 'react';
 import {Pressable, View} from 'react-native';
 
-import {headerStyles} from '@/design-system';
 import {cn} from '@/utils/cn';
 
 import {AppText} from './AppText';
+
+const headerStyles = {
+  container: 'flex-row items-start justify-between gap-4',
+  leadingGroup: 'flex-1 flex-row items-start gap-3',
+  backButton: 'h-12 w-12 items-center justify-center rounded-full bg-surfaceMuted',
+  titleGroup: 'flex-1',
+  subtitle: 'mt-1 max-w-[320px]',
+  rightWrap: 'min-h-[48px] items-center justify-center',
+};
 
 export const AppHeader = ({
   title,

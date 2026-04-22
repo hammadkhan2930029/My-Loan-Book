@@ -5,11 +5,11 @@ export const navigationTheme = {
   dark: false,
   colors: {
     ...DefaultTheme.colors,
-    primary: '#9442f1',
-    background: '#f8f6fb',
-    card: '#fffdfd',
-    text: '#231933',
-    border: '#e8def2',
-    notification: '#e5e844',
+    primary: '#203049',
+    background: '#f6f8fb',
+    card: '#ffffff',
+    text: '#203049',
+    border: '#dce3ea',
+    notification: '#EC7418',
   },
 };

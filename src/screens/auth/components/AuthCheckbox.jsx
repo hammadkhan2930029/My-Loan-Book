@@ -1,8 +1,14 @@
 import React from 'react';
 import {Pressable, Text, View} from 'react-native';
 
-import {authStyles} from '@/design-system';
 import {cn} from '@/utils/cn';
+
+const authStyles = {
+  checkboxRow: 'flex-row items-center gap-3',
+  checkboxBox:
+    'h-6 w-6 items-center justify-center rounded-[8px] border border-borderStrong bg-surface',
+  checkboxChecked: 'border-primary-500 bg-primary-500',
+};
 
 export const AuthCheckbox = ({label, checked, onPress}) => {
   return (

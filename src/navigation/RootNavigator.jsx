@@ -1,6 +1,9 @@
-import React, {useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
+
+import {AppLoader} from '@/components/ui';
+import {clearAuthSession, getAuthSession, saveAuthSession} from '@/services/authStorage';
 
 import {AppNavigator} from './AppNavigator';
 import {AuthNavigator} from './AuthNavigator';
@@ -12,15 +15,49 @@ import {defaultStackScreenOptions} from './screenOptions';
 const Stack = createNativeStackNavigator();
 
 export const RootNavigator = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [session, setSession] = useState(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const isAuthenticated = Boolean(session);
+
+  useEffect(() => {
+    const restoreSession = async () => {
+      try {
+        const savedSession = await getAuthSession();
+        setSession(savedSession);
+      } finally {
+        setIsAuthLoading(false);
+      }
+    };
+
+    restoreSession();
+  }, []);
+
+  const signIn = useCallback(async nextSession => {
+    const sessionToSave = nextSession || {authenticated: true};
+
+    await saveAuthSession(sessionToSave);
+    setSession(sessionToSave);
+  }, []);
+
+  const signOut = useCallback(async () => {
+    await clearAuthSession();
+    setSession(null);
+  }, []);
+
   const authValue = useMemo(
     () => ({
+      isAuthLoading,
       isAuthenticated,
-      signIn: () => setIsAuthenticated(true),
-      signOut: () => setIsAuthenticated(false),
+      session,
+      signIn,
+      signOut,
     }),
-    [isAuthenticated],
+    [isAuthLoading, isAuthenticated, session, signIn, signOut],
   );
+
+  if (isAuthLoading) {
+    return <AppLoader fullscreen label="Loading session..." />;
+  }
 
   return (
     <AuthProvider value={authValue}>

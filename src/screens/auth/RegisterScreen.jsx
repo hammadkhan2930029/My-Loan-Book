@@ -3,10 +3,11 @@ import {KeyboardAvoidingView, Platform, ScrollView, Text, View} from 'react-nati
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import {useForm} from 'react-hook-form';
+import Toast from 'react-native-toast-message';
 
 import {ROUTES} from '@/navigation';
 import {AppBadge, AppButton, AppCard, AppFormStatus, AppLogo} from '@/components/ui';
-import {delay} from '@/utils/delay';
+import {registerUser} from '@/services/authApi';
 import {authValidationRules, getConfirmPasswordRules} from '@/utils/validators';
 
 import {AuthFormField} from './components/AuthFormField';
@@ -16,22 +17,63 @@ export const RegisterScreen = () => {
   const navigation = useNavigation();
   const [focusedField, setFocusedField] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const {control, getValues, handleSubmit, formState} = useForm({
+  const [formMessage, setFormMessage] = useState('');
+  const [formError, setFormError] = useState('');
+  const {control, getValues, handleSubmit, formState, reset} = useForm({
     defaultValues: {
-      fullName: 'Alex Morgan',
-      email: 'alex@myloanbook.app',
-      phone: '+1 234 567 890',
-      password: 'password123',
-      confirmPassword: 'password123',
+      fullName: '',
+      email: '',
+      phone: '',
+      password: '',
+      confirmPassword: '',
     },
     mode: 'onChange',
   });
 
   const onSubmit = async values => {
     setIsSubmitting(true);
-    console.log('Register form values:', values);
-    await delay(700);
-    setIsSubmitting(false);
+    setFormMessage('');
+    setFormError('');
+
+    try {
+      const result = await registerUser(values);
+      const successMessage =
+        result.user?.reg_code
+          ? `Registration successful. Reg code: ${result.user.reg_code}`
+          : 'Registration successful. Please login.';
+
+      setFormMessage(successMessage);
+      Toast.show({
+        type: 'customToast',
+        text1: 'Success',
+        text2: successMessage,
+        props: {
+          bgColor: '#ffffff',
+          borderColor: 'green',
+        },
+      });
+      reset();
+
+      setTimeout(() => {
+        navigation.navigate(ROUTES.LOGIN);
+      }, 1200);
+    } catch (error) {
+      const errorMessage = error.message || 'Registration failed. Please try again.';
+
+      setFormError(errorMessage);
+      Toast.show({
+        type: 'customToast',
+        text1: 'Error',
+        text2: errorMessage,
+        visibilityTime: 3500,
+        props: {
+          bgColor: '#ffffff',
+          borderColor: '#d95f70',
+        },
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -117,7 +159,11 @@ export const RegisterScreen = () => {
               />
 
               <AppFormStatus
-                idleMessage="Create account stays disabled until all fields are valid."
+                idleMessage={
+                  formError ||
+                  formMessage ||
+                  'Create account stays disabled until all fields are valid.'
+                }
                 submitting={isSubmitting}
                 submittingMessage="Creating your account..."
               />
@@ -131,7 +177,7 @@ export const RegisterScreen = () => {
 
               <View className="gap-2">
                 <Text className="text-caption font-normal text-textMuted text-center">
-                  Demo fields only. Validation and API wiring will come next.
+                  Your account is created through the MyLoanBook backend.
                 </Text>
                 <View className="flex-row items-center justify-center gap-1">
                   <Text className="text-caption font-normal text-textSecondary">

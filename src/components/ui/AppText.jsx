@@ -1,8 +1,31 @@
 import React from 'react';
 import {Text} from 'react-native';
 
-import {typographyScale} from '@/design-system';
 import {cn} from '@/utils/cn';
+
+const typographyScale = {
+  hero: {
+    className: 'text-hero font-bold tracking-[-0.4px]',
+  },
+  title: {
+    className: 'text-title font-bold tracking-[-0.3px]',
+  },
+  sectionTitle: {
+    className: 'text-section font-semibold',
+  },
+  body: {
+    className: 'text-body font-normal',
+  },
+  caption: {
+    className: 'text-caption font-normal',
+  },
+  button: {
+    className: 'text-[15px] leading-5 font-semibold',
+  },
+  overline: {
+    className: 'text-[12px] leading-4 font-semibold uppercase tracking-[1px]',
+  },
+};
 
 const colorClasses = {
   primary: 'text-textPrimary',

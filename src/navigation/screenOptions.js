@@ -2,6 +2,6 @@ export const defaultStackScreenOptions = {
   headerShown: false,
   animation: 'slide_from_right',
   contentStyle: {
-    backgroundColor: '#f8f6fb',
+    backgroundColor: '#f6f8fb',
   },
 };

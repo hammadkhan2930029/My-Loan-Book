@@ -5,12 +5,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 
 import { APP_NAME, APP_TAGLINE } from '@/constants/app';
-import { splashStyles } from '@/design-system';
 import { ROUTES } from '@/navigation';
 // Logo aapka custom component hi rahega kyunke wo image/svg ho sakta hai
 import { AppLogo } from '@/components/ui'; 
 import { cn } from '@/utils/cn';
 import { delay } from '@/utils/delay';
+
+const splashStyles = {
+  content: 'flex-1 items-center justify-between px-6 py-8',
+  topGlow: 'absolute -left-12 top-8 h-40 w-40 rounded-full bg-primary-100/70',
+  bottomGlow: 'absolute -right-10 bottom-16 h-48 w-48 rounded-full bg-accent-100/70',
+  logoShell: 'shadow-float',
+};
 
 export const SplashScreen = () => {
   const navigation = useNavigation();

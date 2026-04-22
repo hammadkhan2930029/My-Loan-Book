@@ -1,10 +1,38 @@
 import React from 'react';
 import {ActivityIndicator, Pressable, View} from 'react-native';
 
-import {buttonVariants, colorPalette} from '@/design-system';
 import {cn} from '@/utils/cn';
 
 import {AppText} from './AppText';
+
+const colorPalette = {
+  primary: '#203049',
+  white: '#ffffff',
+};
+
+const buttonVariants = {
+  base: 'items-center justify-center flex-row gap-2 active:scale-[0.99]',
+  sizes: {
+    md: 'min-h-[52px] rounded-[20px] px-4 py-3.5',
+    lg: 'min-h-[58px] rounded-[24px] px-5 py-4',
+  },
+  variants: {
+    primary: 'bg-primary-500 shadow-float active:bg-primary-600',
+    secondary: 'border border-border bg-surfaceMuted active:bg-primary-50',
+    accent: 'bg-accent-300 active:bg-accent-400',
+    ghost: 'bg-transparent active:bg-primary-50',
+  },
+  text: {
+    primary: 'text-white',
+    secondary: 'text-textPrimary',
+    accent: 'text-textPrimary',
+    ghost: 'text-primary-600',
+  },
+  states: {
+    disabled: 'opacity-60',
+    fullWidth: 'w-full',
+  },
+};
 
 export const AppButton = ({
   label,

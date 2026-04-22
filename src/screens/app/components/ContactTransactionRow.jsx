@@ -1,7 +1,16 @@
 import React from 'react';
 import {Pressable, Text, View} from 'react-native';
 
-import {contactDetailStyles} from '@/design-system';
+const contactDetailStyles = {
+  transactionRow: 'min-h-[84px] flex-row items-center gap-3 py-4',
+  transactionMeta: 'mt-1',
+  transactionBadge: 'rounded-full px-3 py-1.5',
+  transactionBadgeGave: 'bg-primary-100',
+  transactionBadgeTook: 'bg-accent-100',
+  amountGave: 'text-primary-600',
+  amountTook: 'text-success',
+  transactionAmountWrap: 'items-end justify-center gap-1',
+};
 
 export const ContactTransactionRow = ({
   title,

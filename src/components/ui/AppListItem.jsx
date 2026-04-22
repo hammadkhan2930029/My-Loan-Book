@@ -1,10 +1,20 @@
 import React from 'react';
 import {Pressable, View} from 'react-native';
 
-import {listRowStyles} from '@/design-system';
 import {cn} from '@/utils/cn';
 
 import {AppText} from './AppText';
+
+const listRowStyles = {
+  container: 'min-h-[76px] flex-row items-center gap-3 py-3.5',
+  divider: 'border-b border-border',
+  content: 'flex-1 justify-center',
+  title: 'text-textPrimary',
+  subtitle: 'mt-1 text-textSecondary',
+  trailingText: 'text-right text-primary-600',
+  trailingWrap: 'items-end justify-center gap-1',
+  sideWrap: 'items-center justify-center',
+};
 
 export const AppListItem = ({
   title,

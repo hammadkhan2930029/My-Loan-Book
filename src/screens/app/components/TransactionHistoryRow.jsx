@@ -1,7 +1,16 @@
 import React from 'react';
 import {Pressable, Text, View} from 'react-native';
 
-import {transactionHistoryStyles} from '@/design-system';
+const transactionHistoryStyles = {
+  row: 'min-h-[88px] flex-row items-center gap-3 py-4',
+  rowMeta: 'mt-1',
+  statusBadge: 'rounded-full px-3 py-1.5',
+  statusGave: 'bg-primary-100',
+  statusTook: 'bg-accent-100',
+  amountGave: 'text-primary-600',
+  amountTook: 'text-success',
+  amountWrap: 'items-end justify-center gap-1',
+};
 
 export const TransactionHistoryRow = ({
   title,

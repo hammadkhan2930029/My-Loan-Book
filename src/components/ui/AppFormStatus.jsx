@@ -1,10 +1,13 @@
 import React from 'react';
 import {View} from 'react-native';
 
-import {uxStateStyles} from '@/design-system';
-
 import {AppLoader} from './AppLoader';
 import {AppText} from './AppText';
+
+const uxStateStyles = {
+  formStatus: 'rounded-[20px] bg-surfaceMuted px-4 py-3',
+  formStatusText: 'text-center',
+};
 
 export const AppFormStatus = ({submitting = false, idleMessage, submittingMessage}) => {
   if (submitting) {

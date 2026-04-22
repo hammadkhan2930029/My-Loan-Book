@@ -1,8 +1,45 @@
 import React from 'react';
 import {Text, View} from 'react-native';
 
-import {avatarStyleMap, avatarVariants} from '@/design-system';
 import {cn} from '@/utils/cn';
+
+const avatarStyleMap = {
+  xs: {
+    container: 'h-8 w-8',
+    text: 'text-xs',
+  },
+  sm: {
+    container: 'h-10 w-10',
+    text: 'text-sm',
+  },
+  md: {
+    container: 'h-12 w-12',
+    text: 'text-base',
+  },
+  lg: {
+    container: 'h-16 w-16',
+    text: 'text-xl',
+  },
+  xl: {
+    container: 'h-20 w-20',
+    text: 'text-2xl',
+  },
+};
+
+const avatarVariants = {
+  primary: {
+    container: 'bg-primary-100',
+    text: 'text-primary-700',
+  },
+  accent: {
+    container: 'bg-accent-100',
+    text: 'text-textPrimary',
+  },
+  muted: {
+    container: 'bg-surfaceMuted',
+    text: 'text-textSecondary',
+  },
+};
 
 const getInitials = name => {
   if (!name || !name.trim()) {

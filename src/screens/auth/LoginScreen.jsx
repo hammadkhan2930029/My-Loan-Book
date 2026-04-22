@@ -1,12 +1,13 @@
 import React, {useState} from 'react';
-import {KeyboardAvoidingView, Platform, ScrollView, Text, TouchableOpacity, View} from 'react-native';
+import {KeyboardAvoidingView, Platform, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import {useForm} from 'react-hook-form';
+import Toast from 'react-native-toast-message';
 
 import {ROUTES, useAuth} from '@/navigation';
 import {AppBadge, AppButton, AppCard, AppFormStatus, AppLogo} from '@/components/ui';
-import {delay} from '@/utils/delay';
+import {loginUser} from '@/services/authApi';
 import {authValidationRules} from '@/utils/validators';
 
 import {AuthCheckbox} from './components/AuthCheckbox';
@@ -19,20 +20,55 @@ export const LoginScreen = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [focusedField, setFocusedField] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formMessage, setFormMessage] = useState('');
+  const [formError, setFormError] = useState('');
   const {control, handleSubmit, formState} = useForm({
     defaultValues: {
-      email: 'alex@myloanbook.app',
-      password: 'password123',
+      phone: '',
+      password: '',
     },
     mode: 'onChange',
   });
 
   const onSubmit = async values => {
     setIsSubmitting(true);
-    console.log('Login form values:', {...values, rememberMe});
-    await delay(700);
-    setIsSubmitting(false);
-    signIn();
+    setFormMessage('');
+    setFormError('');
+
+    try {
+      const result = await loginUser(values);
+      const successMessage = result.reg_code
+        ? `Login successful. Reg code: ${result.reg_code}`
+        : 'Login successful.';
+
+      setFormMessage(successMessage);
+      Toast.show({
+        type: 'customToast',
+        text1: 'Success',
+        text2: successMessage,
+        props: {
+          bgColor: '#ffffff',
+          borderColor: 'green',
+        },
+      });
+      signIn({...result, rememberMe});
+    } catch (error) {
+      const errorMessage = error.message || 'Login failed. Please try again.';
+
+      setFormError(errorMessage);
+      Toast.show({
+        type: 'customToast',
+        text1: 'Error',
+        text2: errorMessage,
+        visibilityTime: 3500,
+        props: {
+          bgColor: '#ffffff',
+          borderColor: '#d95f70',
+        },
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -62,22 +98,19 @@ export const LoginScreen = () => {
           <AppCard variant="elevated">
             <View className="gap-4">
               <AuthFormField
-                autoCapitalize="none"
                 control={control}
                 focusedField={focusedField}
-                helperText="Use a valid email format later when validation is connected."
-                keyboardType="email-address"
-                label="Email"
-                name="email"
-                placeholder="you@example.com"
-                rules={authValidationRules.email}
+                keyboardType="phone-pad"
+                label="Phone"
+                name="phone"
+                placeholder="+1 234 567 890"
+                rules={authValidationRules.phone}
                 setFocusedField={setFocusedField}
               />
 
               <AuthFormField
                 control={control}
                 focusedField={focusedField}
-                helperText="Password field is static for now."
                 label="Password"
                 name="password"
                 placeholder="Enter your password"
@@ -99,7 +132,11 @@ export const LoginScreen = () => {
               </View>
 
               <AppFormStatus
-                idleMessage="Buttons stay disabled until the form becomes valid."
+                idleMessage={
+                  formError ||
+                  formMessage ||
+                  'Buttons stay disabled until the form becomes valid.'
+                }
                 submitting={isSubmitting}
                 submittingMessage="Signing you in..."
               />
@@ -113,7 +150,7 @@ export const LoginScreen = () => {
 
               <View className="gap-2">
                 <Text className="text-caption font-normal text-textMuted text-center">
-                  Demo only. No API calls are connected yet.
+                  Login uses your registered phone number and password.
                 </Text>
                 <View className="flex-row items-center justify-center gap-1">
                   <Text className="text-caption font-normal text-textSecondary">

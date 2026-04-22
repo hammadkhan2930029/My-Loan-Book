@@ -2,8 +2,18 @@ import React from 'react';
 import {KeyboardAvoidingView, Platform, Text, View} from 'react-native';
 
 import {APP_NAME} from '@/constants/app';
-import {authStyles} from '@/design-system';
 import {AppBadge, AppCard, AppLogo, ScreenContainer} from '@/components/ui';
+
+const authStyles = {
+  keyboard: 'flex-1',
+  content: 'flex-grow justify-center px-5 py-6',
+  hero: 'items-center pb-7 pt-3',
+  heroTitle: 'mt-5 text-center',
+  heroSubtitle: 'mt-2 max-w-[300px] text-center',
+  formCard: 'rounded-[32px]',
+  formStack: 'gap-4.5',
+  footerWrap: 'mt-5 items-center gap-2',
+};
 
 export const AuthScreenShell = ({title, subtitle, children, keyboardOffset = 0}) => {
   return (

@@ -1,8 +1,15 @@
 import React from 'react';
 import {Pressable, Text, View} from 'react-native';
 
-import {peopleStyles} from '@/design-system';
 import {AppAvatar} from '@/components/ui';
+
+const peopleStyles = {
+  contactRow: 'min-h-[88px] flex-row items-center gap-4 py-4',
+  contactMeta: 'mt-1',
+  balanceWrap: 'items-end gap-1',
+  balancePositive: 'text-success',
+  balanceNegative: 'text-primary-600',
+};
 
 export const PeopleContactRow = ({
   name,

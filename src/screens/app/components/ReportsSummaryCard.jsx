@@ -1,8 +1,12 @@
 import React from 'react';
 import {Text, View} from 'react-native';
 
-import {reportsStyles} from '@/design-system';
 import {AppCard} from '@/components/ui';
+
+const reportsStyles = {
+  summaryCard: 'flex-1',
+  summaryTop: 'mb-3 flex-row items-center justify-between',
+};
 
 export const ReportsSummaryCard = ({title, amount, note, accent = 'primary'}) => {
   const dotClass = accent === 'accent' ? 'bg-accent-300' : 'bg-primary-500';

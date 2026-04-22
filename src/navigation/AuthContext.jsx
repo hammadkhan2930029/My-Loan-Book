@@ -1,7 +1,9 @@
-import React, {createContext, useContext} from 'react';
+import {createContext, useContext} from 'react';
 
 const AuthContext = createContext({
+  isAuthLoading: true,
   isAuthenticated: false,
+  session: null,
   signIn: () => {},
   signOut: () => {},
 });

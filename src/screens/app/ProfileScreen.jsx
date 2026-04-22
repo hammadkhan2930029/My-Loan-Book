@@ -1,7 +1,9 @@
 import React from 'react';
-import {ScrollView, Text, View} from 'react-native';
+import {Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
+import Clipboard from '@react-native-clipboard/clipboard';
+import Toast from 'react-native-toast-message';
 
 import {ROUTES, useAuth} from '@/navigation';
 import {
@@ -11,15 +13,32 @@ import {
   AppCard,
 } from '@/components/ui';
 
-const profile = {
-  fullName: 'Alex Morgan',
-  email: 'alex@myloanbook.app',
-  phone: '+1 234 567 890',
-};
-
 export const ProfileScreen = () => {
   const navigation = useNavigation();
-  const {signOut} = useAuth();
+  const {session, signOut} = useAuth();
+  const profile = session?.user || {
+    fullName: 'MyLoanBook User',
+    email: 'No email found',
+    phone: 'No phone found',
+  };
+  const regCode = profile.reg_code || session?.reg_code || 'Not available';
+
+  const copyRegCode = () => {
+    if (!profile.reg_code && !session?.reg_code) {
+      return;
+    }
+
+    Clipboard.setString(regCode);
+    Toast.show({
+      type: 'customToast',
+      text1: 'Copied',
+      text2: `Reg code ${regCode} copied.`,
+      props: {
+        bgColor: '#ffffff',
+        borderColor: 'green',
+      },
+    });
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -82,6 +101,20 @@ export const ProfileScreen = () => {
                 <Text className="text-caption font-normal text-textSecondary">Phone</Text>
                 <Text className="mt-1 text-body font-normal text-textPrimary">{profile.phone}</Text>
               </View>
+
+              <Pressable
+                accessibilityRole="button"
+                disabled={regCode === 'Not available'}
+                onPress={copyRegCode}
+                className="flex-row items-center justify-between gap-3 rounded-[18px] border border-border bg-surfaceMuted px-4 py-3 active:bg-primary-50">
+                <View className="flex-1">
+                  <Text className="text-caption font-normal text-textSecondary">Reg Code</Text>
+                  <Text className="mt-1 text-body font-semibold text-textPrimary">
+                    {regCode}
+                  </Text>
+                </View>
+                <AppBadge label="Copy" variant="success" />
+              </Pressable>
             </View>
           </AppCard>
         </View>
