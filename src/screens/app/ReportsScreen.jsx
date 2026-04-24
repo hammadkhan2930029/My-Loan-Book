@@ -90,13 +90,13 @@ export const ReportsScreen = () => {
                 key={month.value}
                 className={`h-10 min-w-[72px] items-center justify-center rounded-full border px-4 ${
                   active
-                    ? 'border-primary-500 bg-primary-100'
+                    ? 'border-primary-500 bg-primary-500'
                     : 'border-border bg-surface'
                 }`}
                 onPress={() => setSelectedMonth(month.value)}>
                 <Text
                   className={`text-center text-caption leading-[16px] font-normal ${
-                    active ? 'text-primary-500' : 'text-textSecondary'
+                    active ? 'text-white' : 'text-textSecondary'
                   }`}>
                   {month.label}
                 </Text>
@@ -143,16 +143,16 @@ export const ReportsScreen = () => {
                 </View>
 
                 <View className="flex-row gap-4">
-                  <View className="flex-1 rounded-2xl bg-primary-100 px-4 py-4">
-                    <Text className="text-caption font-normal text-textSecondary">You Gave</Text>
-                    <Text className="mt-2 text-section font-semibold text-textPrimary">
+                  <View className="flex-1 rounded-2xl bg-primary-500 px-4 py-4">
+                    <Text className="text-caption font-normal text-white/80">You Gave</Text>
+                    <Text className="mt-2 text-section font-semibold text-white">
                       {summary.gave}
                     </Text>
                   </View>
 
-                  <View className="flex-1 rounded-2xl bg-accent-100 px-4 py-4">
-                    <Text className="text-caption font-normal text-textSecondary">You Took</Text>
-                    <Text className="mt-2 text-section font-semibold text-textPrimary">
+                  <View className="flex-1 rounded-2xl bg-accent-400 px-4 py-4">
+                    <Text className="text-caption font-normal text-white/80">You Took</Text>
+                    <Text className="mt-2 text-section font-semibold text-white">
                       {summary.took}
                     </Text>
                   </View>

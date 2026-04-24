@@ -25,7 +25,7 @@ const buttonVariants = {
   text: {
     primary: 'text-white',
     secondary: 'text-textPrimary',
-    accent: 'text-textPrimary',
+    accent: 'text-white',
     ghost: 'text-primary-600',
   },
   states: {
@@ -44,6 +44,7 @@ export const AppButton = ({
   rightElement,
   fullWidth = true,
   className,
+  textClassName,
   ...props
 }) => {
   const isDisabled = disabled || loading;
@@ -71,7 +72,7 @@ export const AppButton = ({
         ) : (
           leftElement
         )}
-        <AppText className={buttonVariants.text[variant]} variant="button">
+        <AppText className={cn(buttonVariants.text[variant], textClassName)} variant="button">
           {label}
         </AppText>
         {!loading ? rightElement : null}

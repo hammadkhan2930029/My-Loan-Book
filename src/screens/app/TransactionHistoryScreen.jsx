@@ -95,13 +95,13 @@ export const TransactionHistoryScreen = () => {
                 hitSlop={6}
                 className={`h-11 min-w-[76px] items-center justify-center rounded-full border px-4 ${
                   isActive
-                    ? 'border-primary-500 bg-primary-100'
+                    ? 'border-primary-500 bg-primary-500'
                     : 'border-border bg-surface'
                 }`}
                 onPress={() => setActiveFilter(filter)}>
                 <Text
                   className={`text-center text-caption leading-[16px] font-normal ${
-                    isActive ? 'text-primary-500' : 'text-textSecondary'
+                    isActive ? 'text-white' : 'text-textSecondary'
                   }`}>
                   {filter}
                 </Text>

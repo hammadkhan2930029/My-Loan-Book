@@ -9,6 +9,7 @@ export const DashboardSummaryCard = ({
   variant = 'receive',
 }) => {
   const isReceive = variant === 'receive';
+  const topLabel = isReceive ? 'Receivable' : 'Payable';
 
   return (
     <View className="flex-1">
@@ -19,6 +20,9 @@ export const DashboardSummaryCard = ({
         style={{elevation: 8}}>
         <View className="flex-row items-start">
           <View className="flex-1 pr-8">
+            <Text className="text-[12px] leading-[15px] font-bold text-white/80">
+              {topLabel}
+            </Text>
             <Text className="text-[12px] leading-[15px] font-semibold text-white/80">
               {title}
             </Text>

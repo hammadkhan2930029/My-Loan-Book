@@ -1,11 +1,10 @@
 import React, {useCallback, useMemo, useState} from 'react';
-import {Pressable, ScrollView, Text, TouchableOpacity, View} from 'react-native';
+import {Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import Toast from 'react-native-toast-message';
 
-import {AppAvatar, AppButton, AppCard, AppListState, AppLoader} from '@/components/ui';
+import {AppButton, AppCard, AppListState, AppLoader} from '@/components/ui';
 import {ROUTES, useAuth} from '@/navigation';
 import {getDashboard} from '@/services/dashboardApi';
 import {approveRepaymentRequest} from '@/services/transactionApi';
@@ -129,24 +128,6 @@ export const DashboardScreen = () => {
         contentContainerClassName="flex-grow px-5 py-5 gap-6"
         showsVerticalScrollIndicator={false}>
         <View className="gap-3">
-          <View className="flex-row items-center justify-between">
-            <TouchableOpacity onPress={() => navigation.navigate(ROUTES.PROFILE)}>
-              <AppAvatar
-                className="border-2 border-white"
-                imageUri={profile.profilePhoto}
-                name={profileName}
-                size="sm"
-                variant="accent"
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              className="h-10 w-10 items-center justify-center rounded-full bg-primary-500"
-              hitSlop={8}>
-              <Ionicons color="#ffffff" name="notifications-outline" size={18} />
-            </TouchableOpacity>
-          </View>
-
           <View>
             <Text className="text-[25px] leading-[30px] font-bold text-textPrimary">
               Hello, {firstName}
@@ -209,20 +190,20 @@ export const DashboardScreen = () => {
                   </View>
 
                   <View className="flex-row gap-4">
-                    <View className="flex-1 rounded-2xl bg-primary-100 px-4 py-4">
-                      <Text className="text-caption font-normal text-textSecondary">
+                    <View className="flex-1 rounded-2xl bg-primary-500 px-4 py-4">
+                      <Text className="text-caption font-normal text-white/80">
                         Total Loaned
                       </Text>
-                      <Text className="mt-2 text-section font-semibold text-textPrimary">
+                      <Text className="mt-2 text-section font-semibold text-white">
                         {summary.loanedAmount}
                       </Text>
                     </View>
 
-                    <View className="flex-1 rounded-2xl bg-accent-100 px-4 py-4">
-                      <Text className="text-caption font-normal text-textSecondary">
+                    <View className="flex-1 rounded-2xl bg-accent-400 px-4 py-4">
+                      <Text className="text-caption font-normal text-white/80">
                         Returned So Far
                       </Text>
-                      <Text className="mt-2 text-section font-semibold text-textPrimary">
+                      <Text className="mt-2 text-section font-semibold text-white">
                         {summary.collectedAmount}
                       </Text>
                     </View>
@@ -283,55 +264,55 @@ export const DashboardScreen = () => {
             </View>
 
             {pendingRepayments.length ? (
-          <View className="gap-3">
-            <View className="flex-row items-center justify-between">
-              <Text className="text-section font-semibold text-textPrimary">
-                Pending Approvals
-              </Text>
-              <Pressable
-                hitSlop={8}
-                onPress={() => navigation.navigate(ROUTES.TRANSACTION_HISTORY)}>
-                <Text className="text-caption font-normal text-textSecondary">See all</Text>
-              </Pressable>
-            </View>
-
-            <AppCard className="rounded-[22px] bg-surface" padding="sm">
               <View className="gap-3">
-              {pendingRepayments.slice(0, 3).map(transaction => (
-                  <View key={transaction.id} className="rounded-[18px] bg-[#fcfbf7] px-3 py-3">
-                    <Text className="text-body font-semibold text-textPrimary">
-                      {transaction.counterpartyName} sent a repayment request
-                    </Text>
-                    <Text className="mt-1 text-caption font-normal text-textSecondary">
-                      {transaction.amount}
-                      {transaction.note ? ` - ${transaction.note}` : ''}
-                    </Text>
-                    <View className="mt-3 flex-row gap-3">
-                      <AppButton
-                        fullWidth={false}
-                        label="Review"
-                        onPress={() =>
-                          navigation.navigate(ROUTES.CONTACT_DETAIL, {
-                            contactId: transaction.contactId,
-                          })
-                        }
-                        size="md"
-                        variant="secondary"
-                      />
-                      <AppButton
-                        fullWidth={false}
-                        label="Confirm"
-                        loading={approvingTransactionId === transaction.id}
-                        onPress={() => handleApproveRepayment(transaction)}
-                        size="md"
-                        variant="accent"
-                      />
-                    </View>
+                <View className="flex-row items-center justify-between">
+                  <Text className="text-section font-semibold text-textPrimary">
+                    Pending Approvals
+                  </Text>
+                  <Pressable
+                    hitSlop={8}
+                    onPress={() => navigation.navigate(ROUTES.TRANSACTION_HISTORY)}>
+                    <Text className="text-caption font-normal text-textSecondary">See all</Text>
+                  </Pressable>
+                </View>
+
+                <AppCard className="rounded-[22px] bg-surface" padding="sm">
+                  <View className="gap-3">
+                    {pendingRepayments.slice(0, 3).map(transaction => (
+                      <View key={transaction.id} className="rounded-[18px] bg-[#fcfbf7] px-3 py-3">
+                        <Text className="text-body font-semibold text-textPrimary">
+                          {transaction.counterpartyName} sent a repayment request
+                        </Text>
+                        <Text className="mt-1 text-caption font-normal text-textSecondary">
+                          {transaction.amount}
+                          {transaction.note ? ` - ${transaction.note}` : ''}
+                        </Text>
+                        <View className="mt-3 flex-row gap-3">
+                          <AppButton
+                            fullWidth={false}
+                            label="Review"
+                            onPress={() =>
+                              navigation.navigate(ROUTES.CONTACT_DETAIL, {
+                                contactId: transaction.contactId,
+                              })
+                            }
+                            size="md"
+                            variant="secondary"
+                          />
+                          <AppButton
+                            fullWidth={false}
+                            label="Confirm"
+                            loading={approvingTransactionId === transaction.id}
+                            onPress={() => handleApproveRepayment(transaction)}
+                            size="md"
+                            variant="accent"
+                          />
+                        </View>
+                      </View>
+                    ))}
                   </View>
-                ))}
+                </AppCard>
               </View>
-            </AppCard>
-          </View>
             ) : null}
 
             <View className="gap-3 pb-24">

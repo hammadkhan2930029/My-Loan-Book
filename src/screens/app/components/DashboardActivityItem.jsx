@@ -14,11 +14,11 @@ export const DashboardActivityItem = ({
   const badgeStyles = {
     receive: {
       container: 'bg-accent-300',
-      text: 'text-textPrimary',
+      text: 'text-white',
     },
     given: {
-      container: 'bg-[#a9caf7]',
-      text: 'text-textPrimary',
+      container: 'bg-primary-700',
+      text: 'text-white',
     },
     taken: {
       container: 'bg-[#ff7b64]',

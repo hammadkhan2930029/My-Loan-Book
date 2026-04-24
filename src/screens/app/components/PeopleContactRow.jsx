@@ -23,7 +23,7 @@ export const PeopleContactRow = ({
   showDivider = true,
 }) => {
   const rowStateClass = selected
-    ? 'rounded-3xl border border-accent-300 bg-accent-100 px-3'
+    ? 'rounded-3xl border border-accent-400 bg-accent-400 px-3'
     : showDivider
       ? 'border-b border-border'
       : '';
@@ -37,9 +37,13 @@ export const PeopleContactRow = ({
       <AppAvatar imageUri={imageUri} name={name} size="md" variant={resolvedVariant} />
 
       <View className="flex-1 justify-center">
-        <Text className="text-body font-normal text-textPrimary">{name}</Text>
+        <Text className={`text-body font-normal ${selected ? 'text-white' : 'text-textPrimary'}`}>
+          {name}
+        </Text>
         <View className={peopleStyles.contactMeta}>
-          <Text className="text-caption font-normal text-textSecondary">{summary}</Text>
+          <Text className={`text-caption font-normal ${selected ? 'text-white/80' : 'text-textSecondary'}`}>
+            {summary}
+          </Text>
         </View>
       </View>
 
@@ -54,7 +58,7 @@ export const PeopleContactRow = ({
         </View>
         <Text
           className={`text-caption font-normal ${
-            selected ? 'text-accent-500' : 'text-textMuted'
+            selected ? 'text-white/80' : 'text-textMuted'
           }`}>
           {selected ? 'selected' : balanceType === 'took' ? 'you took' : 'you gave'}
         </Text>

@@ -230,20 +230,20 @@ export const ContactDetailScreen = () => {
                 </View>
 
                 <View className="flex-row gap-4">
-                  <View className="flex-1 rounded-2xl bg-primary-100 px-4 py-4">
-                    <Text className="text-caption font-normal text-textSecondary">
+                  <View className="flex-1 rounded-2xl bg-primary-500 px-4 py-4">
+                    <Text className="text-caption font-normal text-white/80">
                       {primaryTotalLabel}
                     </Text>
-                    <Text className="mt-2 text-section font-semibold text-textPrimary">
+                    <Text className="mt-2 text-section font-semibold text-white">
                       {formatLedgerAmount(primaryTotalAmount, summary.currency)}
                     </Text>
                   </View>
 
-                  <View className="flex-1 rounded-2xl bg-accent-100 px-4 py-4">
-                    <Text className="text-caption font-normal text-textSecondary">
+                  <View className="flex-1 rounded-2xl bg-accent-400 px-4 py-4">
+                    <Text className="text-caption font-normal text-white/80">
                       {paidBackLabel}
                     </Text>
-                    <Text className="mt-2 text-section font-semibold text-textPrimary">
+                    <Text className="mt-2 text-section font-semibold text-white">
                       {formatLedgerAmount(paidBackAmount, summary.currency)}
                     </Text>
                   </View>

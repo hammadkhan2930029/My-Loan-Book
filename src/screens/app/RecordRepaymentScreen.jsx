@@ -16,29 +16,30 @@ import {
 } from '@/components/ui';
 import {ROUTES} from '@/navigation';
 import {getContact} from '@/services/contactApi';
-import {createRepaymentRequest} from '@/services/transactionApi';
+import {createRepaymentRequest, getTransactions} from '@/services/transactionApi';
+import {formatLedgerAmount, summarizeTransactions} from '@/utils/transactions';
 
 const currencyOptions = [
-  'PKR', // Pakistan
-  'USD', // United States
-  'SAR', // Saudi Arabia
-  'AED', // UAE
-  'EUR', // Europe
-  'GBP', // United Kingdom
-  'INR', // India
-  'CNY', // China
-  'JPY', // Japan
-  'CAD', // Canada
-  'AUD', // Australia
-  'CHF', // Switzerland
-  'TRY', // Turkey
-  'QAR', // Qatar
-  'KWD', // Kuwait
-  'OMR', // Oman
-  'BHD', // Bahrain
-  'MYR', // Malaysia
-  'SGD', // Singapore
-  'THB', // Thailand
+  {code: 'PKR', label: 'Pakistani Rupee'},
+  {code: 'USD', label: 'US Dollar'},
+  {code: 'SAR', label: 'Saudi Riyal'},
+  {code: 'AED', label: 'UAE Dirham'},
+  {code: 'EUR', label: 'Euro'},
+  {code: 'GBP', label: 'British Pound'},
+  {code: 'INR', label: 'Indian Rupee'},
+  {code: 'CNY', label: 'Chinese Yuan'},
+  {code: 'JPY', label: 'Japanese Yen'},
+  {code: 'CAD', label: 'Canadian Dollar'},
+  {code: 'AUD', label: 'Australian Dollar'},
+  {code: 'CHF', label: 'Swiss Franc'},
+  {code: 'TRY', label: 'Turkish Lira'},
+  {code: 'QAR', label: 'Qatari Riyal'},
+  {code: 'KWD', label: 'Kuwaiti Dinar'},
+  {code: 'OMR', label: 'Omani Rial'},
+  {code: 'BHD', label: 'Bahraini Dinar'},
+  {code: 'MYR', label: 'Malaysian Ringgit'},
+  {code: 'SGD', label: 'Singapore Dollar'},
+  {code: 'THB', label: 'Thai Baht'},
 ];
 const dayLabels = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
@@ -79,6 +80,7 @@ export const RecordRepaymentScreen = () => {
   const route = useRoute();
   const contactId = route.params?.contactId;
   const [contact, setContact] = useState(null);
+  const [transactions, setTransactions] = useState([]);
   const [isLoadingContact, setIsLoadingContact] = useState(true);
   const [focusedField, setFocusedField] = useState('');
   const [formError, setFormError] = useState('');
@@ -86,6 +88,7 @@ export const RecordRepaymentScreen = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isCurrencyPickerOpen, setIsCurrencyPickerOpen] = useState(false);
+  const [currencyQuery, setCurrencyQuery] = useState('');
   const [selectedDate, setSelectedDate] = useState(null);
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [attachmentPreview, setAttachmentPreview] = useState({name: ''});
@@ -105,10 +108,17 @@ export const RecordRepaymentScreen = () => {
 
     setIsLoadingContact(true);
     try {
-      const result = await getContact(contactId);
-      setContact(result?.contact || null);
+      const [contactResult, transactionsResult] = await Promise.all([
+        getContact(contactId),
+        getTransactions({contactId}),
+      ]);
+      setContact(contactResult?.contact || null);
+      setTransactions(
+        Array.isArray(transactionsResult?.transactions) ? transactionsResult.transactions : [],
+      );
     } catch (error) {
       setContact(null);
+      setTransactions([]);
       setFormError(error.message || 'Could not load contact.');
     } finally {
       setIsLoadingContact(false);
@@ -120,9 +130,29 @@ export const RecordRepaymentScreen = () => {
   }, [loadContact]);
 
   const calendarDays = useMemo(() => buildCalendarDays(calendarMonth), [calendarMonth]);
+  const summary = useMemo(
+    () => summarizeTransactions(Array.isArray(transactions) ? transactions : []),
+    [transactions],
+  );
+  const outstandingAmount = summary.remainingToPay;
+  const pendingRepaymentAmount = summary.pendingRepaymentSent;
+
+  const filteredCurrencyOptions = useMemo(() => {
+    const normalizedQuery = currencyQuery.trim().toLowerCase();
+
+    if (!normalizedQuery) {
+      return currencyOptions;
+    }
+
+    return currencyOptions.filter(currency =>
+      currency.code.toLowerCase().includes(normalizedQuery) ||
+      currency.label.toLowerCase().includes(normalizedQuery),
+    );
+  }, [currencyQuery]);
 
   const handleSelectCurrency = currency => {
-    setForm(current => ({...current, currency}));
+    setForm(current => ({...current, currency: currency.code}));
+    setCurrencyQuery('');
     setIsCurrencyPickerOpen(false);
   };
 
@@ -184,6 +214,21 @@ export const RecordRepaymentScreen = () => {
 
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
       setFormError('Enter a valid repayment amount.');
+      return;
+    }
+
+    if (outstandingAmount <= 0) {
+      setFormError('There is no outstanding balance left for this contact.');
+      return;
+    }
+
+    if (parsedAmount > outstandingAmount) {
+      setFormError(
+        `Repayment amount cannot exceed ${formatLedgerAmount(
+          outstandingAmount,
+          summary.currency,
+        )}.`,
+      );
       return;
     }
 
@@ -271,6 +316,50 @@ export const RecordRepaymentScreen = () => {
           />
         ) : null}
 
+        {contact ? (
+          <AppCard variant="elevated">
+            <View className="gap-5">
+              <View className="flex-row items-start justify-between gap-4">
+                <View className="flex-1">
+                  <Text className="text-caption font-normal text-textSecondary">
+                    Outstanding Balance
+                  </Text>
+                  <Text className="mt-2 text-hero font-bold tracking-[-0.4px] text-textPrimary">
+                    {formatLedgerAmount(outstandingAmount, summary.currency)}
+                  </Text>
+                  <Text className="mt-2 text-caption font-normal text-textSecondary">
+                    Submit only the amount you are actually returning for this contact.
+                  </Text>
+                </View>
+                <AppBadge
+                  label={outstandingAmount > 0 ? 'Repayment Open' : 'Settled'}
+                  variant={outstandingAmount > 0 ? 'accent' : 'primary'}
+                />
+              </View>
+
+              <View className="flex-row gap-4">
+                <View className="flex-1 rounded-2xl bg-primary-500 px-4 py-4">
+                  <Text className="text-caption font-normal text-white/80">
+                    Max You Can Submit
+                  </Text>
+                  <Text className="mt-2 text-section font-semibold text-white">
+                    {formatLedgerAmount(outstandingAmount, summary.currency)}
+                  </Text>
+                </View>
+
+                <View className="flex-1 rounded-2xl bg-accent-400 px-4 py-4">
+                  <Text className="text-caption font-normal text-white/80">
+                    Pending Requests
+                  </Text>
+                  <Text className="mt-2 text-section font-semibold text-white">
+                    {formatLedgerAmount(pendingRepaymentAmount, summary.currency)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </AppCard>
+        ) : null}
+
         <AppCard variant="elevated">
           <View className="gap-4">
             <AppInput
@@ -340,8 +429,8 @@ export const RecordRepaymentScreen = () => {
               className="items-center rounded-3xl border border-dashed border-border px-5 py-8"
               hitSlop={6}
               onPress={handlePickAttachment}>
-              <View className="h-14 w-14 items-center justify-center rounded-full bg-primary-100">
-                <Text className="text-title font-bold tracking-[-0.3px] text-primary-500">+</Text>
+              <View className="h-14 w-14 items-center justify-center rounded-full bg-primary-500">
+                <Text className="text-title font-bold tracking-[-0.3px] text-white">+</Text>
               </View>
               <Text className="mt-4 text-section font-semibold text-textPrimary">
                 Upload Receipt
@@ -366,11 +455,11 @@ export const RecordRepaymentScreen = () => {
         />
 
         <AppButton
-          disabled={!canSubmit || !contact}
+          disabled={!canSubmit || !contact || outstandingAmount <= 0}
           label="Send Repayment Request"
           loading={isSubmitting}
           onPress={handleSubmit}
-          variant={canSubmit && contact ? 'accent' : 'secondary'}
+          variant={canSubmit && contact && outstandingAmount > 0 ? 'accent' : 'secondary'}
         />
       </ScrollView>
 
@@ -378,36 +467,89 @@ export const RecordRepaymentScreen = () => {
         animationType="fade"
         transparent
         visible={isCurrencyPickerOpen}
-        onRequestClose={() => setIsCurrencyPickerOpen(false)}>
-        <Pressable
-          className="flex-1 items-center justify-center bg-primary-500/30 px-6"
-          onPress={() => setIsCurrencyPickerOpen(false)}>
+        onRequestClose={() => {
+          setCurrencyQuery('');
+          setIsCurrencyPickerOpen(false);
+        }}>
+        <View className="flex-1 items-center justify-center px-6">
           <Pressable
-            className="w-full max-w-[360px] rounded-[28px] bg-background px-5 py-5 shadow-card"
-            onPress={() => {}}>
+            className="absolute inset-0 bg-primary-500/30"
+            onPress={() => {
+              setCurrencyQuery('');
+              setIsCurrencyPickerOpen(false);
+            }}
+          />
+          <View className="w-full max-w-[360px] rounded-[28px] bg-background px-5 py-5 shadow-card">
             <View className="flex-row items-center justify-between">
               <Text className="text-section font-semibold text-textPrimary">Select Currency</Text>
-              <Pressable hitSlop={6} onPress={() => setIsCurrencyPickerOpen(false)}>
+              <Pressable
+                hitSlop={6}
+                onPress={() => {
+                  setCurrencyQuery('');
+                  setIsCurrencyPickerOpen(false);
+                }}>
                 <Text className="text-caption font-semibold text-primary-500">Close</Text>
               </Pressable>
             </View>
 
-            <View className="mt-5 gap-3">
-              {currencyOptions.map(currency => (
-                <Pressable
-                  key={currency}
-                  className={`rounded-2xl border px-4 py-4 ${
-                    currency === form.currency
-                      ? 'border-primary-500 bg-primary-100'
-                      : 'border-border bg-surface'
-                  }`}
-                  onPress={() => handleSelectCurrency(currency)}>
-                  <Text className="text-body font-semibold text-textPrimary">{currency}</Text>
-                </Pressable>
-              ))}
+            <View className="mt-5">
+              <AppInput
+                helperText="Search by currency code"
+                isFocused={false}
+                onChangeText={setCurrencyQuery}
+                placeholder="Search currency"
+                value={currencyQuery}
+                variant="filled"
+              />
             </View>
-          </Pressable>
-        </Pressable>
+
+            {filteredCurrencyOptions.length ? (
+              <ScrollView
+                className="mt-5 max-h-[280px]"
+                contentContainerClassName="gap-3"
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}>
+                {filteredCurrencyOptions.map(currency => {
+                  const isSelected = currency.code === form.currency;
+
+                  return (
+                    <Pressable
+                      key={currency.code}
+                      className={`rounded-2xl border px-4 py-4 ${
+                        isSelected
+                          ? 'border-primary-500 bg-primary-500'
+                          : 'border-border bg-surface'
+                      }`}
+                      hitSlop={4}
+                      onPress={() => handleSelectCurrency(currency)}>
+                      <Text
+                        className={`text-body font-semibold ${
+                          isSelected ? 'text-white' : 'text-textPrimary'
+                        }`}>
+                        {currency.code}
+                      </Text>
+                      <Text
+                        className={`mt-1 text-caption font-normal ${
+                          isSelected ? 'text-white/80' : 'text-textSecondary'
+                        }`}>
+                        {currency.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            ) : (
+              <View className="mt-5 rounded-2xl bg-surface px-4 py-5">
+                <Text className="text-body font-semibold text-textPrimary">
+                  No currency found
+                </Text>
+                <Text className="mt-1 text-caption font-normal text-textSecondary">
+                  Try a different search term.
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
       </Modal>
 
       <Modal

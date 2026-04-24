@@ -5,8 +5,8 @@ const contactDetailStyles = {
   transactionRow: 'min-h-[84px] flex-row items-center gap-3 py-4',
   transactionMeta: 'mt-1',
   transactionBadge: 'rounded-full px-3 py-1.5',
-  transactionBadgeGave: 'bg-primary-100',
-  transactionBadgeTook: 'bg-accent-100',
+  transactionBadgeGave: 'bg-primary-500',
+  transactionBadgeTook: 'bg-accent-400',
   amountGave: 'text-primary-600',
   amountTook: 'text-success',
   transactionAmountWrap: 'items-end justify-center gap-1',
@@ -31,7 +31,7 @@ export const ContactTransactionRow = ({
             ? contactDetailStyles.transactionBadgeTook
             : contactDetailStyles.transactionBadgeGave
         }`}>
-        <Text className={`text-caption font-normal ${isTook ? 'text-accent-500' : 'text-primary-500'}`}>
+        <Text className="text-caption font-normal text-white">
           {isTook ? 'Took' : 'Gave'}
         </Text>
       </View>

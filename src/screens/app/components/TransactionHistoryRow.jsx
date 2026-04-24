@@ -5,8 +5,8 @@ const transactionHistoryStyles = {
   row: 'min-h-[88px] flex-row items-center gap-3 py-4',
   rowMeta: 'mt-1',
   statusBadge: 'rounded-full px-3 py-1.5',
-  statusGave: 'bg-primary-100',
-  statusTook: 'bg-accent-100',
+  statusGave: 'bg-primary-500',
+  statusTook: 'bg-accent-400',
   amountGave: 'text-primary-600',
   amountTook: 'text-success',
   amountWrap: 'items-end justify-center gap-1',
@@ -30,7 +30,7 @@ export const TransactionHistoryRow = ({
         className={`${transactionHistoryStyles.statusBadge} ${
           isTook ? transactionHistoryStyles.statusTook : transactionHistoryStyles.statusGave
         }`}>
-        <Text className={`text-caption font-normal ${isTook ? 'text-accent-500' : 'text-primary-500'}`}>
+        <Text className="text-caption font-normal text-white">
           {isTook ? 'Took' : 'Gave'}
         </Text>
       </View>

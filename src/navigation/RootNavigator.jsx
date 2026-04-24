@@ -5,9 +5,9 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {AppLoader} from '@/components/ui';
 import {clearAuthSession, getAuthSession, saveAuthSession} from '@/services/authStorage';
 
-import {AppNavigator} from './AppNavigator';
 import {AuthNavigator} from './AuthNavigator';
 import {AuthProvider} from './AuthContext';
+import {DrawerNavigator} from './DrawerNavigator';
 import {navigationTheme} from './navigationTheme';
 import {ROUTES} from './routeNames';
 import {defaultStackScreenOptions} from './screenOptions';
@@ -64,7 +64,7 @@ export const RootNavigator = () => {
       <NavigationContainer theme={navigationTheme}>
         <Stack.Navigator screenOptions={defaultStackScreenOptions}>
           {isAuthenticated ? (
-            <Stack.Screen component={AppNavigator} name={ROUTES.APP_FLOW} />
+            <Stack.Screen component={DrawerNavigator} name={ROUTES.APP_FLOW} />
           ) : (
             <Stack.Screen component={AuthNavigator} name={ROUTES.AUTH_FLOW} />
           )}

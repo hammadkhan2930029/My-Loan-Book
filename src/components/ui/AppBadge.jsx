@@ -13,12 +13,12 @@ const badgeStyles = {
       text: 'text-textSecondary',
     },
     primary: {
-      container: 'bg-primary-100',
-      text: 'text-primary-700',
+      container: 'bg-primary-500',
+      text: 'text-white',
     },
     accent: {
-      container: 'bg-accent-100',
-      text: 'text-textPrimary',
+      container: 'bg-accent-400',
+      text: 'text-white',
     },
     success: {
       container: 'bg-[#e9f6ef]',
