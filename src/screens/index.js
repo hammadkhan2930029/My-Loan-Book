@@ -6,6 +6,7 @@ export * from './app/EditProfileScreen';
 export * from './app/MyDetailsScreen';
 export * from './app/MyPeopleScreen';
 export * from './app/ProfileScreen';
+export * from './app/RecordRepaymentScreen';
 export * from './app/ReportsScreen';
 export * from './app/TransactionHistoryScreen';
 export * from './auth/ForgotPasswordScreen';

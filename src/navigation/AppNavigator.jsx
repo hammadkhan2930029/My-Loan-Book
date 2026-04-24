@@ -6,6 +6,7 @@ import {
   ContactDetailScreen,
   EditProfileScreen,
   MyDetailsScreen,
+  RecordRepaymentScreen,
   TransactionHistoryScreen,
 } from '@/screens';
 
@@ -26,6 +27,7 @@ export const AppNavigator = () => {
       <Stack.Screen component={ChangePasswordScreen} name={ROUTES.CHANGE_PASSWORD} />
       <Stack.Screen component={TransactionHistoryScreen} name={ROUTES.TRANSACTION_HISTORY} />
       <Stack.Screen component={ContactDetailScreen} name={ROUTES.CONTACT_DETAIL} />
+      <Stack.Screen component={RecordRepaymentScreen} name={ROUTES.RECORD_REPAYMENT} />
     </Stack.Navigator>
   );
 };

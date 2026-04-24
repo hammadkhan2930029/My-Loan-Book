@@ -3,10 +3,11 @@ import {KeyboardAvoidingView, Platform, ScrollView, Text, View} from 'react-nati
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import {useForm} from 'react-hook-form';
+import Toast from 'react-native-toast-message';
 
 import {ROUTES} from '@/navigation';
 import {AppBadge, AppButton, AppCard, AppFormStatus, AppLogo} from '@/components/ui';
-import {delay} from '@/utils/delay';
+import {forgotPassword} from '@/services/authApi';
 import {authValidationRules} from '@/utils/validators';
 
 import {AuthFormField} from './components/AuthFormField';
@@ -16,18 +17,59 @@ export const ForgotPasswordScreen = () => {
   const navigation = useNavigation();
   const [focusedField, setFocusedField] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formMessage, setFormMessage] = useState('');
+  const [formError, setFormError] = useState('');
   const {control, handleSubmit, formState} = useForm({
     defaultValues: {
-      email: 'alex@myloanbook.app',
+      email: '',
     },
     mode: 'onChange',
   });
 
   const onSubmit = async values => {
     setIsSubmitting(true);
-    console.log('Forgot password form values:', values);
-    await delay(700);
-    setIsSubmitting(false);
+    setFormMessage('');
+    setFormError('');
+
+    try {
+      const result = await forgotPassword(values);
+      const successMessage = result.expiresInMinutes
+        ? `Reset token generated. It expires in ${result.expiresInMinutes} minutes.`
+        : 'Reset token generated.';
+
+      setFormMessage(successMessage);
+      Toast.show({
+        type: 'customToast',
+        text1: 'Success',
+        text2: successMessage,
+        props: {
+          bgColor: '#ffffff',
+          borderColor: 'green',
+        },
+      });
+      navigation.navigate(ROUTES.RESET_PASSWORD, {
+        email: values.email,
+        resetToken: result.resetToken,
+        expiresInMinutes: result.expiresInMinutes,
+      });
+    } catch (error) {
+      const errorMessage =
+        error.message || 'Password reset request failed. Please try again.';
+
+      setFormError(errorMessage);
+      Toast.show({
+        type: 'customToast',
+        text1: 'Error',
+        text2: errorMessage,
+        visibilityTime: 3500,
+        props: {
+          bgColor: '#ffffff',
+          borderColor: '#d95f70',
+        },
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -50,7 +92,7 @@ export const ForgotPasswordScreen = () => {
               Forgot Password
             </Text>
             <Text className="mt-2 max-w-[300px] text-body font-normal text-textSecondary text-center">
-              Enter your email and we&apos;ll use this flow later for password recovery.
+              Enter your email and we&apos;ll prepare a secure password reset token.
             </Text>
           </View>
 
@@ -63,7 +105,7 @@ export const ForgotPasswordScreen = () => {
               <AuthFormField
                 autoCapitalize="none"
                 control={control}
-                helperText="Static helper text only for now."
+                helperText="Use the email address attached to your MyLoanBook account."
                 focusedField={focusedField}
                 keyboardType="email-address"
                 label="Email"
@@ -74,9 +116,13 @@ export const ForgotPasswordScreen = () => {
               />
 
               <AppFormStatus
-                idleMessage="Submit becomes available after entering a valid email."
+                idleMessage={
+                  formError ||
+                  formMessage ||
+                  'Submit becomes available after entering a valid email.'
+                }
                 submitting={isSubmitting}
-                submittingMessage="Preparing reset request..."
+                submittingMessage="Requesting reset token..."
               />
 
               <AppButton

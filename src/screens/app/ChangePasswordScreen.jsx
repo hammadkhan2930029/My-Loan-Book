@@ -3,8 +3,10 @@ import {Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import {useForm} from 'react-hook-form';
+import Toast from 'react-native-toast-message';
 
-import {delay} from '@/utils/delay';
+import {ROUTES, useAuth} from '@/navigation';
+import {changePassword} from '@/services/authApi';
 import {authValidationRules, getConfirmPasswordRules} from '@/utils/validators';
 import {
   AppBadge,
@@ -16,22 +18,68 @@ import {AuthFormField} from '@/screens';
 
 export const ChangePasswordScreen = () => {
   const navigation = useNavigation();
+  const {session, signIn} = useAuth();
   const [focusedField, setFocusedField] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const {control, getValues, handleSubmit, formState} = useForm({
+  const [formMessage, setFormMessage] = useState('');
+  const [formError, setFormError] = useState('');
+  const {control, getValues, handleSubmit, formState, reset} = useForm({
     defaultValues: {
-      currentPassword: 'password123',
-      password: 'newpassword123',
-      confirmPassword: 'newpassword123',
+      currentPassword: '',
+      password: '',
+      confirmPassword: '',
     },
     mode: 'onChange',
   });
 
   const onSubmit = async values => {
     setIsSubmitting(true);
-    console.log('Change password form values:', values);
-    await delay(700);
-    setIsSubmitting(false);
+    setFormMessage('');
+    setFormError('');
+
+    try {
+      const result = await changePassword(values);
+      const successMessage = 'Password changed successfully.';
+      const nextSession = session
+        ? {
+            ...session,
+            token: result.token,
+            user: result.user,
+          }
+        : result;
+
+      await signIn(nextSession);
+      reset();
+      setFormMessage(successMessage);
+      Toast.show({
+        type: 'customToast',
+        text1: 'Success',
+        text2: successMessage,
+        props: {
+          bgColor: '#ffffff',
+          borderColor: 'green',
+        },
+      });
+      navigation.navigate(ROUTES.MAIN_TABS, {
+        screen: ROUTES.PROFILE,
+      });
+    } catch (error) {
+      const errorMessage = error.message || 'Password change failed. Please try again.';
+
+      setFormError(errorMessage);
+      Toast.show({
+        type: 'customToast',
+        text1: 'Error',
+        text2: errorMessage,
+        visibilityTime: 3500,
+        props: {
+          bgColor: '#ffffff',
+          borderColor: '#d95f70',
+        },
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -67,7 +115,7 @@ export const ChangePasswordScreen = () => {
               Password Settings
             </Text>
             <Text className="text-caption font-normal text-textSecondary">
-              Use static values for now. No API call is connected yet.
+              Confirm your current password before saving a new one.
             </Text>
           </View>
         </AppCard>
@@ -122,7 +170,11 @@ export const ChangePasswordScreen = () => {
         </View>
 
         <AppFormStatus
-          idleMessage="Password save stays disabled until all three fields are valid."
+          idleMessage={
+            formError ||
+            formMessage ||
+            'Password save stays disabled until all three fields are valid.'
+          }
           submitting={isSubmitting}
           submittingMessage="Saving new password..."
         />

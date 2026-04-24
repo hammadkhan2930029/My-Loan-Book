@@ -2,7 +2,16 @@ import React from 'react';
 import {Text, View} from 'react-native';
 import Svg, {Circle} from 'react-native-svg';
 
-export const ReportsDonutChart = ({gave, took, total}) => {
+export const ReportsDonutChart = ({
+  centerLabel = 'Total Flow',
+  centerValue,
+  footerLabel = 'gave vs took',
+  gave,
+  primaryColor = '#203049',
+  secondaryColor = '#EC7418',
+  took,
+  total,
+}) => {
   const size = 190;
   const strokeWidth = 20;
   const radius = (size - strokeWidth) / 2;
@@ -29,7 +38,7 @@ export const ReportsDonutChart = ({gave, took, total}) => {
           fill="none"
           r={radius}
           rotation="-90"
-          stroke="#203049"
+          stroke={primaryColor}
           strokeDasharray={`${circumference} ${circumference}`}
           strokeDashoffset={gaveOffset}
           strokeLinecap="round"
@@ -42,7 +51,7 @@ export const ReportsDonutChart = ({gave, took, total}) => {
           fill="none"
           r={radius}
           rotation={gavePercent * 360 - 90}
-          stroke="#EC7418"
+          stroke={secondaryColor}
           strokeDasharray={`${circumference} ${circumference}`}
           strokeDashoffset={tookOffset}
           strokeLinecap="round"
@@ -52,12 +61,14 @@ export const ReportsDonutChart = ({gave, took, total}) => {
       </Svg>
 
       <View className="absolute items-center justify-center">
-        <Text className="text-caption font-normal text-textSecondary">Total Flow</Text>
+        <Text className="text-caption font-normal text-textSecondary">{centerLabel}</Text>
         <View className="mt-1">
-          <Text className="text-title font-bold tracking-[-0.3px] text-textPrimary">${total}</Text>
+          <Text className="text-title font-bold tracking-[-0.3px] text-textPrimary">
+            {centerValue || `$${total}`}
+          </Text>
         </View>
         <View className="mt-1">
-          <Text className="text-caption font-normal text-textMuted">gave vs took</Text>
+          <Text className="text-caption font-normal text-textMuted">{footerLabel}</Text>
         </View>
       </View>
     </View>

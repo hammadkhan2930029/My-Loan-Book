@@ -13,17 +13,28 @@ const peopleStyles = {
 
 export const PeopleContactRow = ({
   name,
+  imageUri,
   summary,
   balance,
   balanceType = 'gave',
+  onPress,
+  selected = false,
   variant = 'primary',
   showDivider = true,
 }) => {
+  const rowStateClass = selected
+    ? 'rounded-3xl border border-accent-300 bg-accent-100 px-3'
+    : showDivider
+      ? 'border-b border-border'
+      : '';
+  const resolvedVariant = selected ? 'accent' : variant;
+
   return (
     <Pressable
       hitSlop={6}
-      className={`${peopleStyles.contactRow} ${showDivider ? 'border-b border-border' : ''}`}>
-      <AppAvatar name={name} size="md" variant={variant} />
+      onPress={onPress}
+      className={`${peopleStyles.contactRow} ${rowStateClass}`}>
+      <AppAvatar imageUri={imageUri} name={name} size="md" variant={resolvedVariant} />
 
       <View className="flex-1 justify-center">
         <Text className="text-body font-normal text-textPrimary">{name}</Text>
@@ -41,8 +52,11 @@ export const PeopleContactRow = ({
           }>
           <Text className="text-caption font-normal">{balance}</Text>
         </View>
-        <Text className="text-caption font-normal text-textMuted">
-          {balanceType === 'took' ? 'you took' : 'you gave'}
+        <Text
+          className={`text-caption font-normal ${
+            selected ? 'text-accent-500' : 'text-textMuted'
+          }`}>
+          {selected ? 'selected' : balanceType === 'took' ? 'you took' : 'you gave'}
         </Text>
       </View>
     </Pressable>

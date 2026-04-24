@@ -1,5 +1,5 @@
 import React from 'react';
-import {Text, View} from 'react-native';
+import {Image, Text, View} from 'react-native';
 
 import {cn} from '@/utils/cn';
 
@@ -56,6 +56,7 @@ const getInitials = name => {
 
 export const AppAvatar = ({
   name,
+  imageUri,
   size = 'md',
   variant = 'primary',
   fallbackLabel,
@@ -73,14 +74,22 @@ export const AppAvatar = ({
         className,
       )}
       {...props}>
-      <Text
-        className={cn(
-          'font-semibold',
-          avatarVariants[variant].text,
-          avatarStyleMap[size].text,
-        )}>
-        {label}
-      </Text>
+      {imageUri ? (
+        <Image
+          className="h-full w-full rounded-full"
+          resizeMode="cover"
+          source={{uri: imageUri}}
+        />
+      ) : (
+        <Text
+          className={cn(
+            'font-semibold',
+            avatarVariants[variant].text,
+            avatarStyleMap[size].text,
+          )}>
+          {label}
+        </Text>
+      )}
     </View>
   );
 };

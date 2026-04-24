@@ -3,9 +3,9 @@ import {Pressable, Text} from 'react-native';
 
 import {AppAvatar} from '@/components/ui';
 
-export const DashboardContactCard = ({name, variant = 'primary'}) => {
+export const DashboardContactCard = ({name, onPress, variant = 'primary'}) => {
   return (
-    <Pressable className="items-center gap-2">
+    <Pressable className="items-center gap-2" onPress={onPress}>
       <AppAvatar name={name} size="md" variant={variant} />
       <Text className="text-caption font-normal text-textPrimary">{name}</Text>
     </Pressable>

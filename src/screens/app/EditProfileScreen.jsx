@@ -3,8 +3,11 @@ import {Pressable, ScrollView, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import {useForm} from 'react-hook-form';
+import {launchImageLibrary} from 'react-native-image-picker';
+import Toast from 'react-native-toast-message';
 
-import {delay} from '@/utils/delay';
+import {ROUTES, useAuth} from '@/navigation';
+import {updateProfile} from '@/services/authApi';
 import {authValidationRules} from '@/utils/validators';
 import {
   AppAvatar,
@@ -17,22 +20,166 @@ import {AuthFormField} from '@/screens';
 
 export const EditProfileScreen = () => {
   const navigation = useNavigation();
+  const {session, signIn} = useAuth();
+  const profile = session?.user || {
+    fullName: '',
+    email: '',
+    phone: '',
+    profilePhoto: '',
+  };
   const [focusedField, setFocusedField] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const {control, handleSubmit, formState} = useForm({
+  const [formMessage, setFormMessage] = useState('');
+  const [formError, setFormError] = useState('');
+  const {control, handleSubmit, formState, setValue, watch} = useForm({
     defaultValues: {
-      fullName: 'Alex Morgan',
-      email: 'alex@myloanbook.app',
-      phone: '+1 234 567 890',
+      fullName: profile.fullName,
+      email: profile.email,
+      phone: profile.phone,
+      profilePhoto: profile.profilePhoto || '',
     },
     mode: 'onChange',
   });
+  const previewPhoto = watch('profilePhoto');
+
+  const pickProfilePhoto = async () => {
+    let result;
+
+    try {
+      result = await launchImageLibrary({
+        mediaType: 'photo',
+        includeBase64: true,
+        maxWidth: 600,
+        maxHeight: 600,
+        quality: 0.6,
+        selectionLimit: 1,
+      });
+    } catch (pickerError) {
+      const errorMessage =
+        pickerError.message || 'Could not open image picker. Please try again.';
+
+      setFormError(errorMessage);
+      Toast.show({
+        type: 'customToast',
+        text1: 'Error',
+        text2: errorMessage,
+        visibilityTime: 3500,
+        props: {
+          bgColor: '#ffffff',
+          borderColor: '#d95f70',
+        },
+      });
+      return;
+    }
+
+    if (result.didCancel) {
+      return;
+    }
+
+    if (result.errorCode) {
+      const errorMessage = result.errorMessage || 'Could not select profile photo.';
+
+      setFormError(errorMessage);
+      Toast.show({
+        type: 'customToast',
+        text1: 'Error',
+        text2: errorMessage,
+        visibilityTime: 3500,
+        props: {
+          bgColor: '#ffffff',
+          borderColor: '#d95f70',
+        },
+      });
+      return;
+    }
+
+    const selectedAsset = result.assets?.[0];
+
+    if (!selectedAsset?.base64) {
+      const errorMessage = 'Selected image could not be prepared. Please try another photo.';
+
+      setFormError(errorMessage);
+      Toast.show({
+        type: 'customToast',
+        text1: 'Error',
+        text2: errorMessage,
+        visibilityTime: 3500,
+        props: {
+          bgColor: '#ffffff',
+          borderColor: '#d95f70',
+        },
+      });
+      return;
+    }
+
+    const imageType = selectedAsset.type || 'image/jpeg';
+    const imageData = `data:${imageType};base64,${selectedAsset.base64}`;
+
+    setFormError('');
+    setFormMessage('Profile photo selected. Save changes to update your account.');
+    setValue('profilePhoto', imageData, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
+
+  const removeProfilePhoto = () => {
+    setFormError('');
+    setFormMessage('Profile photo removed. Save changes to update your account.');
+    setValue('profilePhoto', '', {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
 
   const onSubmit = async values => {
     setIsSubmitting(true);
-    console.log('Edit profile form values:', values);
-    await delay(700);
-    setIsSubmitting(false);
+    setFormMessage('');
+    setFormError('');
+
+    try {
+      const result = await updateProfile(values);
+      const successMessage = 'Profile updated successfully.';
+      const nextSession = session
+        ? {
+            ...session,
+            user: result.user,
+          }
+        : {
+            user: result.user,
+          };
+
+      setFormMessage(successMessage);
+      await signIn(nextSession);
+      Toast.show({
+        type: 'customToast',
+        text1: 'Success',
+        text2: successMessage,
+        props: {
+          bgColor: '#ffffff',
+          borderColor: 'green',
+        },
+      });
+      navigation.navigate(ROUTES.MAIN_TABS, {
+        screen: ROUTES.PROFILE,
+      });
+    } catch (error) {
+      const errorMessage = error.message || 'Profile update failed. Please try again.';
+
+      setFormError(errorMessage);
+      Toast.show({
+        type: 'customToast',
+        text1: 'Error',
+        text2: errorMessage,
+        visibilityTime: 3500,
+        props: {
+          bgColor: '#ffffff',
+          borderColor: '#d95f70',
+        },
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -63,16 +210,34 @@ export const EditProfileScreen = () => {
 
         <AppCard variant="elevated">
           <View className="items-center gap-4">
-            <AppAvatar name="Alex Morgan" size="xl" variant="primary" />
+            <AppAvatar
+              imageUri={previewPhoto}
+              name={profile.fullName || 'MyLoanBook User'}
+              size="xl"
+              variant="primary"
+            />
             <View className="items-center">
               <Text className="text-title font-bold tracking-[-0.3px] text-textPrimary">
-                Alex Morgan
+                {profile.fullName || 'MyLoanBook User'}
               </Text>
               <Text className="mt-1 text-caption font-normal text-textSecondary">
-                Profile image placeholder
+                Profile details synced with your account
               </Text>
             </View>
-            <AppButton label="Change Photo" size="md" variant="secondary" />
+            <AppButton
+              label="Change Photo"
+              onPress={pickProfilePhoto}
+              size="md"
+              variant="secondary"
+            />
+            {previewPhoto ? (
+              <AppButton
+                label="Remove Photo"
+                onPress={removeProfilePhoto}
+                size="md"
+                variant="ghost"
+              />
+            ) : null}
           </View>
         </AppCard>
 
@@ -80,7 +245,7 @@ export const EditProfileScreen = () => {
           <View>
             <Text className="text-section font-semibold text-textPrimary">Profile Details</Text>
             <Text className="mt-1 text-caption font-normal text-textSecondary">
-              These fields are validation-ready and still using static data only.
+              These fields update your saved MyLoanBook account details.
             </Text>
           </View>
 
@@ -124,7 +289,11 @@ export const EditProfileScreen = () => {
         </View>
 
         <AppFormStatus
-          idleMessage="Save changes becomes available when the edited profile stays valid."
+          idleMessage={
+            formError ||
+            formMessage ||
+            'Save changes becomes available when the edited profile stays valid.'
+          }
           submitting={isSubmitting}
           submittingMessage="Saving your profile..."
         />

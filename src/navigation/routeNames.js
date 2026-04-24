@@ -17,4 +17,5 @@ export const ROUTES = {
   CHANGE_PASSWORD: 'ChangePassword',
   TRANSACTION_HISTORY: 'TransactionHistory',
   CONTACT_DETAIL: 'ContactDetail',
+  RECORD_REPAYMENT: 'RecordRepayment',
 };

@@ -20,6 +20,7 @@ export const ProfileScreen = () => {
     fullName: 'MyLoanBook User',
     email: 'No email found',
     phone: 'No phone found',
+    profilePhoto: '',
   };
   const regCode = profile.reg_code || session?.reg_code || 'Not available';
 
@@ -60,7 +61,12 @@ export const ProfileScreen = () => {
 
         <AppCard variant="elevated">
           <View className="flex-row items-center gap-4">
-            <AppAvatar name={profile.fullName} size="xl" variant="primary" />
+            <AppAvatar
+              imageUri={profile.profilePhoto}
+              name={profile.fullName}
+              size="xl"
+              variant="primary"
+            />
             <View className="flex-1">
               <Text className="text-title font-bold tracking-[-0.3px] text-textPrimary">
                 {profile.fullName}
