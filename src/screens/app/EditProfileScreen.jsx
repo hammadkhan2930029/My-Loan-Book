@@ -212,13 +212,13 @@ export const EditProfileScreen = () => {
           <View className="items-center gap-4">
             <AppAvatar
               imageUri={previewPhoto}
-              name={profile.fullName || 'MyLoanBook User'}
+              name={profile.fullName || 'Digital Loan Tracker User'}
               size="xl"
               variant="primary"
             />
             <View className="items-center">
               <Text className="text-title font-bold tracking-[-0.3px] text-textPrimary">
-                {profile.fullName || 'MyLoanBook User'}
+                {profile.fullName || 'Digital Loan Tracker User'}
               </Text>
               <Text className="mt-1 text-caption font-normal text-textSecondary">
                 Profile details synced with your account
@@ -245,7 +245,7 @@ export const EditProfileScreen = () => {
           <View>
             <Text className="text-section font-semibold text-textPrimary">Profile Details</Text>
             <Text className="mt-1 text-caption font-normal text-textSecondary">
-              These fields update your saved MyLoanBook account details.
+              These fields update your saved Digital Loan Tracker account details.
             </Text>
           </View>
 

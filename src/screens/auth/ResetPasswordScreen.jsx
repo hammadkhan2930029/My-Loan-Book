@@ -172,7 +172,7 @@ export const ResetPasswordScreen = () => {
           </AppCard>
 
           <View className="mt-5 items-center gap-2">
-            <Text className="text-caption font-normal text-textMuted">MyLoanBook</Text>
+            <Text className="text-caption font-normal text-textMuted">Digital Loan Tracker</Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

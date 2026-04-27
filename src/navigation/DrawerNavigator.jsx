@@ -102,7 +102,7 @@ const AppDrawerContent = props => {
   const {navigation, state} = props;
   const {session} = useAuth();
   const profile = session?.user || {};
-  const profileName = profile.fullName || 'MyLoanBook User';
+  const profileName = profile.fullName || 'Digital Loan Tracker User';
   const activeRouteName = getActiveRouteName(state);
   const profileMeta = profile.email || profile.phone || 'No account info';
 

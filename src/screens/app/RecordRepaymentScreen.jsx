@@ -156,6 +156,39 @@ export const RecordRepaymentScreen = () => {
     setIsCurrencyPickerOpen(false);
   };
 
+  const handleAmountChange = value => {
+    const sanitizedValue = value.replace(/[^0-9.]/g, '');
+    const decimalParts = sanitizedValue.split('.');
+    const normalizedValue =
+      decimalParts.length > 2
+        ? `${decimalParts[0]}.${decimalParts.slice(1).join('')}`
+        : sanitizedValue;
+
+    if (!normalizedValue) {
+      setForm(current => ({...current, amount: ''}));
+      setFormError('');
+      return;
+    }
+
+    const parsedValue = Number(normalizedValue);
+
+    if (!Number.isFinite(parsedValue)) {
+      setForm(current => ({...current, amount: normalizedValue}));
+      return;
+    }
+
+    if (outstandingAmount > 0 && parsedValue > outstandingAmount) {
+      setForm(current => ({...current, amount: String(outstandingAmount)}));
+      setFormError(
+        `You can enter up to ${formatLedgerAmount(outstandingAmount, summary.currency)} only.`,
+      );
+      return;
+    }
+
+    setForm(current => ({...current, amount: normalizedValue}));
+    setFormError('');
+  };
+
   const handlePickAttachment = async () => {
     let result;
 
@@ -368,7 +401,7 @@ export const RecordRepaymentScreen = () => {
               keyboardType="numeric"
               label="Amount"
               onBlur={() => setFocusedField('')}
-              onChangeText={amount => setForm(current => ({...current, amount}))}
+              onChangeText={handleAmountChange}
               onFocus={() => setFocusedField('amount')}
               placeholder="Enter amount"
               value={form.amount}

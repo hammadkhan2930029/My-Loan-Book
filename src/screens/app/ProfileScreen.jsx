@@ -1,5 +1,5 @@
 import React from 'react';
-import {Pressable, ScrollView, Text, View} from 'react-native';
+import {Pressable, ScrollView, Share, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import Clipboard from '@react-native-clipboard/clipboard';
@@ -17,7 +17,7 @@ export const ProfileScreen = () => {
   const navigation = useNavigation();
   const {session, signOut} = useAuth();
   const profile = session?.user || {
-    fullName: 'MyLoanBook User',
+    fullName: 'Digital Loan Tracker User',
     email: 'No email found',
     phone: 'No phone found',
     profilePhoto: '',
@@ -39,6 +39,26 @@ export const ProfileScreen = () => {
         borderColor: 'green',
       },
     });
+  };
+
+  const handleShareApp = async () => {
+    try {
+      await Share.share({
+        message:
+          'Track personal loans and repayments easily with Digital Loan Tracker. Try the app and stay on top of every record.',
+      });
+    } catch (error) {
+      Toast.show({
+        type: 'customToast',
+        text1: 'Error',
+        text2: error.message || 'Could not open share options.',
+        visibilityTime: 3500,
+        props: {
+          bgColor: '#ffffff',
+          borderColor: '#d95f70',
+        },
+      });
+    }
   };
 
   return (
@@ -143,6 +163,11 @@ export const ProfileScreen = () => {
               <AppButton
                 label="Change Password"
                 onPress={() => navigation.navigate(ROUTES.CHANGE_PASSWORD)}
+                variant="secondary"
+              />
+              <AppButton
+                label="Share App"
+                onPress={handleShareApp}
                 variant="secondary"
               />
               <AppButton label="Logout" onPress={signOut} variant="secondary" />

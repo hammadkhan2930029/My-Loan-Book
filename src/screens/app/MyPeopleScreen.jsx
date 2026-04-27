@@ -139,7 +139,7 @@ export const MyPeopleScreen = () => {
         <View className="flex-row items-start justify-between gap-4">
           <View className="flex-1">
             <Text className="text-caption font-normal text-textSecondary">
-              Add registered MyLoanBook users by registration code and track balances.
+              Add registered Digital Loan Tracker users by registration code and track balances.
             </Text>
             <Text className="mt-2 text-title font-bold tracking-[-0.3px] text-textPrimary">
               My People

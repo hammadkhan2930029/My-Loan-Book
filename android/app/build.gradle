@@ -83,9 +83,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.myloanbook"
+    namespace "com.digitalloantracker"
     defaultConfig {
-        applicationId "com.myloanbook"
+        applicationId "com.digitalloantracker"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

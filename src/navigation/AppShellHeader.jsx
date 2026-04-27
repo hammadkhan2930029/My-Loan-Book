@@ -70,14 +70,14 @@ const getHeaderTitle = ({options, route}) => {
     titleMap[route?.name] ||
     activeRouteName ||
     route?.name ||
-    'MyLoanBook'
+    'Digital Loan Tracker'
   );
 };
 
 export const AppShellHeader = ({navigation, options, route}) => {
   const {session} = useAuth();
   const profile = session?.user || {};
-  const profileName = profile.fullName || 'MyLoanBook User';
+  const profileName = profile.fullName || 'Digital Loan Tracker User';
   const headerTitle = getHeaderTitle({options, route});
   const [unreadCount, setUnreadCount] = useState(0);
 

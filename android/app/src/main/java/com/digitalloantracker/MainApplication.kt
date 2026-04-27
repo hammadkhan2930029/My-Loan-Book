@@ -1,4 +1,4 @@
-package com.myloanbook
+package com.digitalloantracker
 
 import android.app.Application
 import com.facebook.react.PackageList

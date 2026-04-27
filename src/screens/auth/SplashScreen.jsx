@@ -1,13 +1,11 @@
 
 import React, { useEffect } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 
-import { APP_NAME, APP_TAGLINE } from '@/constants/app';
+import { APP_LOGO, APP_NAME, APP_TAGLINE } from '@/constants/app';
 import { ROUTES } from '@/navigation';
-// Logo aapka custom component hi rahega kyunke wo image/svg ho sakta hai
-import { AppLogo } from '@/components/ui'; 
 import { cn } from '@/utils/cn';
 import { delay } from '@/utils/delay';
 
@@ -57,7 +55,11 @@ export const SplashScreen = () => {
         {/* Center Section: Logo aur Title */}
         <View className="items-center justify-center">
           <View className={cn("p-6 rounded-[40px] bg-surfaceMuted mb-8", splashStyles.logoShell)}>
-            <AppLogo size="lg" />
+            <Image
+              source={APP_LOGO}
+              className="h-32 w-32"
+              resizeMode="contain"
+            />
           </View>
 
           <View className="items-center">

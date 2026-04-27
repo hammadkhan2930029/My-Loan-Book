@@ -784,8 +784,8 @@ export const AddTransactionScreen = () => {
                                         <Pressable
                                             key={currency.code}
                                             className={`rounded-2xl border px-4 py-4 ${isSelected
-                                                    ? 'border-primary-500 bg-primary-500'
-                                                    : 'border-border bg-surface'
+                                                ? 'border-primary-500 bg-primary-500'
+                                                : 'border-border bg-surface'
                                                 }`}
                                             hitSlop={4}
                                             onPress={() => handleSelectCurrency(currency)}>
@@ -888,10 +888,10 @@ export const AddTransactionScreen = () => {
                                     <View key={day.toISOString()} className="mb-2 w-[14.28%] items-center">
                                         <Pressable
                                             className={`h-11 w-11 items-center justify-center rounded-full ${isSelected
-                                                    ? 'bg-primary-500'
-                                                    : isToday
-                                                        ? 'border border-primary-500 bg-primary-500'
-                                                        : 'bg-surface'
+                                                ? 'bg-primary-500'
+                                                : isToday
+                                                    ? 'border border-primary-500 bg-primary-500'
+                                                    : 'bg-surface'
                                                 }`}
                                             hitSlop={4}
                                             onPress={() => handleSelectDate(day)}>

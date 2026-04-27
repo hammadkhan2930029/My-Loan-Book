@@ -45,9 +45,9 @@ export const DeveloperScreen = () => {
           <Text className="mt-2 text-caption font-normal text-white/80">
             Product engineering and business-focused software solutions built with clarity and care.
           </Text>
-          <View className="mt-4">
+          {/* <View className="mt-4">
             <AppBadge className="bg-white/15" label="Trusted Team" variant="primary" />
-          </View>
+          </View> */}
         </View>
 
         <View className="gap-4">

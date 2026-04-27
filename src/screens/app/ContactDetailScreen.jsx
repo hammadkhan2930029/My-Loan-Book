@@ -94,22 +94,35 @@ export const ContactDetailScreen = () => {
   const safeTransactions = Array.isArray(transactions) ? transactions : [];
   const summary = summarizeTransactions(safeTransactions);
   const formattedTransactions = safeTransactions.map(mapTransactionToContactRow);
-  const isBorrowerView = summary.balance < 0;
-  const primaryTotalLabel = isBorrowerView ? 'Total Borrowed' : 'Total Loaned';
-  const primaryTotalAmount = isBorrowerView ? summary.took : summary.gave;
-  const paidBackLabel = isBorrowerView ? 'Paid Back' : 'Collected Back';
-  const paidBackAmount = isBorrowerView ? summary.repaid : summary.collected;
+  const hasReceivableBalance = summary.remainingToReceive > 0;
+  const hasPayableBalance = summary.remainingToPay > 0;
+  const overallBalanceLabel =
+    hasReceivableBalance && !hasPayableBalance
+      ? 'Remaining To Receive'
+      : hasPayableBalance && !hasReceivableBalance
+        ? 'Remaining To Pay'
+        : hasReceivableBalance && hasPayableBalance
+          ? 'Net Outstanding Balance'
+          : 'Outstanding Balance';
   const pendingRepaymentRequests = transactions.filter(
     transaction =>
       transaction.category === 'repayment' &&
       transaction.status === 'pending' &&
       transaction.type === 'took',
   );
+  const overallBalanceAmount =
+    hasReceivableBalance && !hasPayableBalance
+      ? summary.remainingToReceive
+      : hasPayableBalance && !hasReceivableBalance
+        ? summary.remainingToPay
+        : Math.abs(summary.balance);
   const balanceLabel =
-    summary.balance > 0
-      ? 'You gave more overall.'
-      : summary.balance < 0
-        ? 'You took more overall.'
+    hasReceivableBalance && !hasPayableBalance
+      ? 'This is the amount still expected back from this contact.'
+      : hasPayableBalance && !hasReceivableBalance
+        ? 'This is the amount you still need to return to this contact.'
+        : hasReceivableBalance && hasPayableBalance
+          ? 'This contact has both receivable and payable activity. The net difference is shown here.'
         : transactions.length
           ? 'This contact is currently settled.'
           : 'No transactions recorded yet.';
@@ -156,14 +169,14 @@ export const ContactDetailScreen = () => {
             <Text className="text-caption font-semibold text-primary-500">Back</Text>
           </Pressable>
 
-          <View className="flex-1">
+          {/* <View className="flex-1">
             <Text className="text-caption font-normal text-textSecondary">
               Contact details, balance summary, and transaction history.
             </Text>
             <Text className="mt-2 text-title font-bold tracking-[-0.3px] text-textPrimary">
               Contact Detail
             </Text>
-          </View>
+          </View> */}
         </View>
 
         {isLoading ? (
@@ -217,10 +230,10 @@ export const ContactDetailScreen = () => {
                 <View className="flex-row items-start justify-between gap-4">
                   <View className="flex-1">
                     <Text className="text-caption font-normal text-textSecondary">
-                      Overall Balance
+                      {overallBalanceLabel}
                     </Text>
                     <Text className="mt-2 text-hero font-bold tracking-[-0.4px] text-textPrimary">
-                      {formatLedgerAmount(summary.balance, summary.currency)}
+                      {formatLedgerAmount(overallBalanceAmount, summary.currency)}
                     </Text>
                     <Text className="mt-2 text-caption font-normal text-textSecondary">
                       {balanceLabel}
@@ -229,22 +242,60 @@ export const ContactDetailScreen = () => {
                   <AppBadge label="Open Ledger" variant="accent" />
                 </View>
 
+                <View className="flex-row flex-wrap justify-between">
+                  <View className="mb-4 w-[48%] rounded-2xl bg-primary-500 px-4 py-4">
+                    <Text className="text-caption font-normal text-white/80">
+                      Total Loaned
+                    </Text>
+                    <Text className="mt-2 text-section font-semibold text-white">
+                      {formatLedgerAmount(summary.gave, summary.currency)}
+                    </Text>
+                  </View>
+
+                  <View className="mb-4 w-[48%] rounded-2xl bg-[#2f7d62] px-4 py-4">
+                    <Text className="text-caption font-normal text-white/80">
+                      Collected Back
+                    </Text>
+                    <Text className="mt-2 text-section font-semibold text-white">
+                      {formatLedgerAmount(summary.collected, summary.currency)}
+                    </Text>
+                  </View>
+
+                  <View className="w-[48%] rounded-2xl bg-accent-400 px-4 py-4">
+                    <Text className="text-caption font-normal text-white/80">
+                      Total Borrowed
+                    </Text>
+                    <Text className="mt-2 text-section font-semibold text-white">
+                      {formatLedgerAmount(summary.took, summary.currency)}
+                    </Text>
+                  </View>
+
+                  <View className="w-[48%] rounded-2xl bg-[#cb5a36] px-4 py-4">
+                    <Text className="text-caption font-normal text-white/80">
+                      Paid Back
+                    </Text>
+                    <Text className="mt-2 text-section font-semibold text-white">
+                      {formatLedgerAmount(summary.repaid, summary.currency)}
+                    </Text>
+                  </View>
+                </View>
+
                 <View className="flex-row gap-4">
                   <View className="flex-1 rounded-2xl bg-primary-500 px-4 py-4">
                     <Text className="text-caption font-normal text-white/80">
-                      {primaryTotalLabel}
+                      Remaining To Receive
                     </Text>
                     <Text className="mt-2 text-section font-semibold text-white">
-                      {formatLedgerAmount(primaryTotalAmount, summary.currency)}
+                      {formatLedgerAmount(summary.remainingToReceive, summary.currency)}
                     </Text>
                   </View>
 
                   <View className="flex-1 rounded-2xl bg-accent-400 px-4 py-4">
                     <Text className="text-caption font-normal text-white/80">
-                      {paidBackLabel}
+                      Remaining To Pay
                     </Text>
                     <Text className="mt-2 text-section font-semibold text-white">
-                      {formatLedgerAmount(paidBackAmount, summary.currency)}
+                      {formatLedgerAmount(summary.remainingToPay, summary.currency)}
                     </Text>
                   </View>
                 </View>
@@ -332,9 +383,9 @@ export const ContactDetailScreen = () => {
             </View>
 
             <AppButton
-              label={summary.balance < 0 ? 'Record Repayment' : 'Add Transaction'}
+              label={summary.remainingToPay > 0 ? 'Record Repayment' : 'Add Transaction'}
               onPress={() => {
-                if (summary.balance < 0) {
+                if (summary.remainingToPay > 0) {
                     navigation.navigate(ROUTES.RECORD_REPAYMENT, {
                     contactId: contact?.id,
                   });

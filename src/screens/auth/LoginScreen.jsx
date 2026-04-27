@@ -85,14 +85,14 @@ export const LoginScreen = () => {
           <View className="items-center pb-7 pt-3">
             <AppBadge label="Secure Access" variant="primary" />
             <View className="mt-5">
-              <AppLogo size="md" />
+              <AppLogo showAccentDot={false} size="md" />
             </View>
             <Text className="mt-5 text-title font-bold tracking-[-0.3px] text-textPrimary text-center">
               Login
             </Text>
-            <Text className="mt-2 max-w-[300px] text-body font-normal text-textSecondary text-center">
+            {/* <Text className="mt-2 max-w-[300px] text-body font-normal text-textSecondary text-center">
               Welcome back. Track balances, payments, and people from one calm finance space.
-            </Text>
+            </Text> */}
           </View>
 
           <AppCard variant="elevated">
@@ -149,9 +149,9 @@ export const LoginScreen = () => {
               />
 
               <View className="gap-2">
-                <Text className="text-caption font-normal text-textMuted text-center">
+                {/* <Text className="text-caption font-normal text-textMuted text-center">
                   Login uses your registered phone number and password.
-                </Text>
+                </Text> */}
                 <View className="flex-row items-center justify-center gap-1">
                   <Text className="text-caption font-normal text-textSecondary">
                     Don&apos;t have an account?
@@ -166,7 +166,7 @@ export const LoginScreen = () => {
           </AppCard>
 
           <View className="mt-5 items-center gap-2">
-            <Text className="text-caption font-normal text-textMuted">MyLoanBook</Text>
+            <Text className="text-caption font-normal text-textMuted">Digital Loan Tracker</Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

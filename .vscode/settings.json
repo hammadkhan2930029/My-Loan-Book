@@ -1,0 +1,33 @@
+{
+  "editor.detectIndentation": false,
+  "editor.insertSpaces": true,
+  "editor.tabSize": 4,
+  "[javascript]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4
+  },
+  "[javascriptreact]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4
+  },
+  "[typescript]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4
+  },
+  "[typescriptreact]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4
+  },
+  "[json]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4
+  },
+  "[xml]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4
+  },
+  "[html]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4
+  }
+}

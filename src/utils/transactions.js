@@ -125,9 +125,9 @@ export const summarizeTransactions = transactions =>
         summary.gave += amount;
       }
 
-      summary.balance = summary.gave - summary.took;
       summary.remainingToReceive = Math.max(summary.gave - summary.collected, 0);
       summary.remainingToPay = Math.max(summary.took - summary.repaid, 0);
+      summary.balance = summary.remainingToReceive - summary.remainingToPay;
 
       return summary;
     },
