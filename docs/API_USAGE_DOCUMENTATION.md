@@ -7,7 +7,7 @@ This document lists the APIs currently used in the React Native app, which front
 Base configuration:
 
 - Frontend API client: [src/services/apiClient.js](/g:/CodeX/NewProject/MyLoanBook/src/services/apiClient.js:1)
-- Current base URL: `http://192.168.18.10:5000/api`
+- Current base URL: `http://187.127.114.29/api`
 - Auth token: sent automatically in `Authorization: Bearer <token>` when a saved session exists
 
 ## API Client Behavior

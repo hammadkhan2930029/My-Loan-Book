@@ -2,8 +2,8 @@ import axios from 'axios';
 
 import {getAuthSession} from './authStorage';
 
-const API_HOST = '192.168.18.10';
-const API_BASE_URL = `http://${API_HOST}:5000/api`;
+const API_HOST = '187.127.114.29';
+const API_BASE_URL = `http://${API_HOST}/api`;
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
