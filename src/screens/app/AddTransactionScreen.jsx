@@ -351,7 +351,7 @@ export const AddTransactionScreen = () => {
                 note: form.note.trim(),
                 attachment: form.attachment,
             });
-            const successMessage = `${selectedContact.name} transaction saved successfully.`;
+            const successMessage = `${selectedContact.name} will be notified. This loan will be added after confirmation.`;
 
             setForm({
                 amount: '',

@@ -54,6 +54,18 @@ const formatRelativeTime = value => {
 };
 
 const notificationTheme = {
+  loan_assigned: {
+    accent: 'bg-accent-400',
+    icon: 'cash-outline',
+  },
+  loan_confirmed: {
+    accent: 'bg-primary-500',
+    icon: 'checkmark-circle-outline',
+  },
+  loan_rejected: {
+    accent: 'bg-danger',
+    icon: 'close-circle-outline',
+  },
   payment_submitted: {
     accent: 'bg-accent-400',
     icon: 'receipt-outline',
@@ -146,7 +158,15 @@ export const NotificationsScreen = () => {
 
       if (
         senderContactId &&
-        ['payment_submitted', 'payment_confirmed', 'payment_rejected', 'contact_added'].includes(
+        [
+          'loan_assigned',
+          'loan_confirmed',
+          'loan_rejected',
+          'payment_submitted',
+          'payment_confirmed',
+          'payment_rejected',
+          'contact_added',
+        ].includes(
           notification?.type,
         )
       ) {

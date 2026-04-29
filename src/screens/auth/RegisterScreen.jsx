@@ -36,11 +36,8 @@ export const RegisterScreen = () => {
         setFormError('');
 
         try {
-            const result = await registerUser(values);
-            const successMessage =
-                result.user?.reg_code
-                    ? `Registration successful. Reg code: ${result.user.reg_code}`
-                    : 'Registration successful. Please login.';
+            await registerUser(values);
+            const successMessage = 'Your account has been created successfully. Please login to continue.';
 
             setFormMessage(successMessage);
             Toast.show({

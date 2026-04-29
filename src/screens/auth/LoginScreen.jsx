@@ -37,21 +37,23 @@ export const LoginScreen = () => {
 
     try {
       const result = await loginUser(values);
-      const successMessage = result.reg_code
-        ? `Login successful. Reg code: ${result.reg_code}`
-        : 'Login successful.';
+      const successMessage = 'Welcome back. You have signed in successfully.';
 
       setFormMessage(successMessage);
       Toast.show({
         type: 'customToast',
         text1: 'Success',
         text2: successMessage,
+        visibilityTime: 1200,
         props: {
           bgColor: '#ffffff',
           borderColor: 'green',
         },
       });
-      signIn({...result, rememberMe});
+
+      setTimeout(() => {
+        signIn({...result, rememberMe});
+      }, 900);
     } catch (error) {
       const errorMessage = error.message || 'Login failed. Please try again.';
 

@@ -26,6 +26,16 @@ export const createRepaymentRequest = payload =>
     data: payload,
   });
 
+export const confirmLoanRequest = transactionId =>
+  apiRequest(`/transactions/${transactionId}/confirm-loan`, {
+    method: 'PATCH',
+  });
+
+export const rejectLoanRequest = transactionId =>
+  apiRequest(`/transactions/${transactionId}/reject-loan`, {
+    method: 'PATCH',
+  });
+
 export const approveRepaymentRequest = transactionId =>
   apiRequest(`/transactions/${transactionId}/approve-repayment`, {
     method: 'PATCH',

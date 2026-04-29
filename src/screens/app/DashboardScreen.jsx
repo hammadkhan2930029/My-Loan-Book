@@ -7,7 +7,11 @@ import Toast from 'react-native-toast-message';
 import { AppButton, AppCard, AppListState, AppLoader } from '@/components/ui';
 import { ROUTES, useAuth } from '@/navigation';
 import { getDashboard } from '@/services/dashboardApi';
-import { approveRepaymentRequest } from '@/services/transactionApi';
+import {
+    approveRepaymentRequest,
+    confirmLoanRequest,
+    rejectLoanRequest,
+} from '@/services/transactionApi';
 
 import { DashboardActivityItem } from './components/DashboardActivityItem';
 import { DashboardContactCard } from './components/DashboardContactCard';
@@ -61,7 +65,7 @@ export const DashboardScreen = () => {
     const summary =
         dashboard?.summary && typeof dashboard.summary === 'object' ? dashboard.summary : null;
     const contacts = Array.isArray(dashboard?.contacts) ? dashboard.contacts : [];
-    const pendingRepayments = Array.isArray(dashboard?.pendingApprovals)
+    const pendingApprovals = Array.isArray(dashboard?.pendingApprovals)
         ? dashboard.pendingApprovals
         : [];
     const recentActivity = Array.isArray(dashboard?.recentActivity)
@@ -94,11 +98,18 @@ export const DashboardScreen = () => {
         setApprovingTransactionId(transaction.id);
 
         try {
-            await approveRepaymentRequest(transaction.id);
+            if (transaction.category === 'loan') {
+                await confirmLoanRequest(transaction.id);
+            } else {
+                await approveRepaymentRequest(transaction.id);
+            }
             Toast.show({
                 type: 'customToast',
                 text1: 'Success',
-                text2: 'Repayment approved successfully.',
+                text2:
+                    transaction.category === 'loan'
+                        ? 'Loan confirmed successfully.'
+                        : 'Repayment approved successfully.',
                 props: {
                     bgColor: '#ffffff',
                     borderColor: 'green',
@@ -109,7 +120,42 @@ export const DashboardScreen = () => {
             Toast.show({
                 type: 'customToast',
                 text1: 'Error',
-                text2: error.message || 'Could not approve repayment.',
+                text2:
+                    error.message ||
+                    (transaction.category === 'loan'
+                        ? 'Could not confirm loan.'
+                        : 'Could not approve repayment.'),
+                visibilityTime: 3500,
+                props: {
+                    bgColor: '#ffffff',
+                    borderColor: '#d95f70',
+                },
+            });
+        } finally {
+            setApprovingTransactionId('');
+        }
+    };
+
+    const handleRejectLoan = async transaction => {
+        setApprovingTransactionId(transaction.id);
+
+        try {
+            await rejectLoanRequest(transaction.id);
+            Toast.show({
+                type: 'customToast',
+                text1: 'Success',
+                text2: 'Loan rejected successfully.',
+                props: {
+                    bgColor: '#ffffff',
+                    borderColor: 'green',
+                },
+            });
+            await loadDashboard();
+        } catch (error) {
+            Toast.show({
+                type: 'customToast',
+                text1: 'Error',
+                text2: error.message || 'Could not reject loan.',
                 visibilityTime: 3500,
                 props: {
                     bgColor: '#ffffff',
@@ -133,8 +179,8 @@ export const DashboardScreen = () => {
                             Hello, {firstName}
                         </Text>
                         {/* <Text className="mt-0.5 text-[13px] leading-[18px] font-semibold text-textPrimary">
-                            {pendingRepayments.length
-                                ? `${pendingRepayments.length} pending approvals need review`
+                            {pendingApprovals.length
+                                ? `${pendingApprovals.length} pending approvals need review`
                                 : 'Your balances are ready to review'}
                         </Text> */}
                     </View>
@@ -263,7 +309,7 @@ export const DashboardScreen = () => {
                             </AppCard>
                         </View>
 
-                        {pendingRepayments.length ? (
+                        {pendingApprovals.length ? (
                             <View className="gap-3">
                                 <View className="flex-row items-center justify-between">
                                     <Text className="text-section font-semibold text-textPrimary">
@@ -278,15 +324,34 @@ export const DashboardScreen = () => {
 
                                 <AppCard className="rounded-[22px] bg-surface" padding="sm">
                                     <View className="gap-3">
-                                        {pendingRepayments.slice(0, 3).map(transaction => (
-                                            <View key={transaction.id} className="rounded-[18px] bg-[#fcfbf7] px-3 py-3">
+                                        {pendingApprovals.slice(0, 3).map(transaction => (
+                                            <View
+                                                key={transaction.id}
+                                                className={`rounded-[20px] px-4 py-4 ${
+                                                    transaction.category === 'loan'
+                                                        ? 'border border-accent-300 bg-[#fff6ee]'
+                                                        : 'bg-[#fcfbf7]'
+                                                }`}>
                                                 <Text className="text-body font-semibold text-textPrimary">
-                                                    {transaction.counterpartyName} sent a repayment request
+                                                    {transaction.category === 'loan'
+                                                        ? transaction.type === 'took'
+                                                            ? `${transaction.counterpartyName} assigned you a loan`
+                                                            : `${transaction.counterpartyName} recorded a loan they gave you`
+                                                        : `${transaction.counterpartyName} sent a repayment request`}
                                                 </Text>
-                                                <Text className="mt-1 text-caption font-normal text-textSecondary">
-                                                    {transaction.amount}
-                                                    {transaction.note ? ` - ${transaction.note}` : ''}
-                                                </Text>
+                                                <View className="mt-2 flex-row items-center justify-between gap-3">
+                                                    <Text className="text-caption font-normal text-textSecondary">
+                                                        {transaction.amount}
+                                                        {transaction.note ? ` - ${transaction.note}` : ''}
+                                                    </Text>
+                                                    {transaction.category === 'loan' ? (
+                                                        <View className="rounded-full bg-accent-400 px-3 py-1.5">
+                                                            <Text className="text-caption font-semibold text-white">
+                                                                Pending
+                                                            </Text>
+                                                        </View>
+                                                    ) : null}
+                                                </View>
                                                 <View className="mt-3 flex-row gap-3">
                                                     <AppButton
                                                         fullWidth={false}
@@ -299,9 +364,23 @@ export const DashboardScreen = () => {
                                                         size="md"
                                                         variant="secondary"
                                                     />
+                                                    {transaction.category === 'loan' ? (
+                                                        <AppButton
+                                                            fullWidth={false}
+                                                            label="Reject"
+                                                            loading={approvingTransactionId === transaction.id}
+                                                            onPress={() => handleRejectLoan(transaction)}
+                                                            size="md"
+                                                            variant="secondary"
+                                                        />
+                                                    ) : null}
                                                     <AppButton
                                                         fullWidth={false}
-                                                        label="Confirm"
+                                                        label={
+                                                            transaction.category === 'loan'
+                                                                ? 'Confirm Loan'
+                                                                : 'Confirm'
+                                                        }
                                                         loading={approvingTransactionId === transaction.id}
                                                         onPress={() => handleApproveRepayment(transaction)}
                                                         size="md"

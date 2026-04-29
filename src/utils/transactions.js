@@ -50,6 +50,8 @@ export const getTransactionSubtitle = transaction => {
 
   if (transaction?.category === 'repayment') {
     parts.push(transaction?.status === 'pending' ? 'Repayment pending approval' : 'Repayment');
+  } else if (transaction?.status === 'pending') {
+    parts.push('Loan pending confirmation');
   }
 
   if (transaction?.note) {
@@ -85,6 +87,9 @@ export const mapTransactionToContactRow = transaction => ({
   } ${formatTransactionDate(transaction.transactionDate)}`,
   subtitle:
     [
+      transaction.status === 'pending' && transaction.category === 'loan'
+        ? 'Awaiting confirmation'
+        : '',
       transaction.dueDate ? `Return by ${formatTransactionDate(transaction.dueDate)}` : '',
       transaction.monthlyPaymentDay ? `Monthly on ${transaction.monthlyPaymentDay}` : '',
       transaction.currency || 'PKR',
