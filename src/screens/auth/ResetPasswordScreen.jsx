@@ -5,10 +5,9 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import {useForm} from 'react-hook-form';
 import Toast from 'react-native-toast-message';
 
-import {ROUTES, useAuth} from '@/navigation';
+import {ROUTES} from '@/navigation';
 import {AppBadge, AppButton, AppCard, AppFormStatus, AppLogo} from '@/components/ui';
 import {resetPassword} from '@/services/authApi';
-import {authValidationRules, getConfirmPasswordRules} from '@/utils/validators';
 
 import {AuthFormField} from './components/AuthFormField';
 import {AuthLinkText} from './components/AuthLinkText';
@@ -16,22 +15,17 @@ import {AuthLinkText} from './components/AuthLinkText';
 export const ResetPasswordScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const {signIn} = useAuth();
   const resetToken = route.params?.resetToken || '';
   const resetEmail = route.params?.email || '';
-  const expiresInMinutes = route.params?.expiresInMinutes;
   const [focusedField, setFocusedField] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formMessage, setFormMessage] = useState(
-    expiresInMinutes
-      ? `Reset token ready for ${resetEmail}. It expires in ${expiresInMinutes} minutes.`
-      : '',
+    resetEmail ? `Create a new password for ${resetEmail}.` : '',
   );
   const [formError, setFormError] = useState('');
   const {control, getValues, handleSubmit, formState} = useForm({
     defaultValues: {
-      token: resetToken,
-      password: '',
+      newPassword: '',
       confirmPassword: '',
     },
     mode: 'onChange',
@@ -43,7 +37,11 @@ export const ResetPasswordScreen = () => {
     setFormError('');
 
     try {
-      const result = await resetPassword(values);
+      await resetPassword({
+        email: resetEmail,
+        resetToken,
+        newPassword: values.newPassword,
+      });
       const successMessage = 'Password reset successful.';
 
       setFormMessage(successMessage);
@@ -51,12 +49,18 @@ export const ResetPasswordScreen = () => {
         type: 'customToast',
         text1: 'Success',
         text2: successMessage,
+        visibilityTime: 1200,
         props: {
           bgColor: '#ffffff',
           borderColor: 'green',
         },
       });
-      await signIn(result);
+      setTimeout(() => {
+        navigation.reset({
+          index: 0,
+          routes: [{name: ROUTES.LOGIN}],
+        });
+      }, 900);
     } catch (error) {
       const errorMessage = error.message || 'Password reset failed. Please try again.';
 
@@ -102,31 +106,28 @@ export const ResetPasswordScreen = () => {
 
           <AppCard variant="elevated">
             <View className="gap-4">
-              <AuthFormField
-                autoCapitalize="none"
-                control={control}
-                focusedField={focusedField}
-                helperText={
-                  resetToken
-                    ? 'Token received from your reset request.'
-                    : 'Paste the reset token generated from Forgot Password.'
-                }
-                label="Reset Token"
-                name="token"
-                placeholder="Enter reset token"
-                rules={{
-                  required: 'Reset token is required.',
-                }}
-                setFocusedField={setFocusedField}
-              />
+              <View className="rounded-[20px] bg-surfaceMuted px-4 py-3">
+                <Text className="text-caption font-normal text-textSecondary text-center">
+                  Resetting password for
+                </Text>
+                <Text className="mt-1 text-caption font-semibold text-primary-500 text-center">
+                  {resetEmail || 'No email provided'}
+                </Text>
+              </View>
 
               <AuthFormField
                 control={control}
                 focusedField={focusedField}
                 label="New Password"
-                name="password"
+                name="newPassword"
                 placeholder="Enter new password"
-                rules={authValidationRules.password}
+                rules={{
+                  required: 'Password is required.',
+                  minLength: {
+                    value: 8,
+                    message: 'Password must be at least 8 characters.',
+                  },
+                }}
                 secureTextEntry
                 setFocusedField={setFocusedField}
               />
@@ -137,7 +138,11 @@ export const ResetPasswordScreen = () => {
                 label="Confirm Password"
                 name="confirmPassword"
                 placeholder="Confirm new password"
-                rules={getConfirmPasswordRules(getValues)}
+                rules={{
+                  required: 'Please confirm your password.',
+                  validate: value =>
+                    value === getValues('newPassword') || 'Passwords do not match.',
+                }}
                 secureTextEntry
                 setFocusedField={setFocusedField}
               />
@@ -146,7 +151,7 @@ export const ResetPasswordScreen = () => {
                 idleMessage={
                   formError ||
                   formMessage ||
-                  'Save stays disabled until the token and passwords are valid.'
+                  'Save stays disabled until both passwords are valid.'
                 }
                 submitting={isSubmitting}
                 submittingMessage="Updating your password..."

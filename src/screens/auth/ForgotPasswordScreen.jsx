@@ -7,7 +7,7 @@ import Toast from 'react-native-toast-message';
 
 import { ROUTES } from '@/navigation';
 import { AppBadge, AppButton, AppCard, AppFormStatus, AppLogo } from '@/components/ui';
-import { forgotPassword } from '@/services/authApi';
+import { requestForgotPasswordOtp } from '@/services/authApi';
 import { authValidationRules } from '@/utils/validators';
 
 import { AuthFormField } from './components/AuthFormField';
@@ -32,10 +32,8 @@ export const ForgotPasswordScreen = () => {
         setFormError('');
 
         try {
-            const result = await forgotPassword(values);
-            const successMessage = result.expiresInMinutes
-                ? `Reset token generated. It expires in ${result.expiresInMinutes} minutes.`
-                : 'Reset token generated.';
+            await requestForgotPasswordOtp(values);
+            const successMessage = 'Verification code sent successfully.';
 
             setFormMessage(successMessage);
             Toast.show({
@@ -47,10 +45,9 @@ export const ForgotPasswordScreen = () => {
                     borderColor: 'green',
                 },
             });
-            navigation.navigate(ROUTES.RESET_PASSWORD, {
+            navigation.navigate(ROUTES.OTP_VERIFICATION, {
                 email: values.email,
-                resetToken: result.resetToken,
-                expiresInMinutes: result.expiresInMinutes,
+                purpose: 'forgot_password',
             });
         } catch (error) {
             const errorMessage =

@@ -7,7 +7,7 @@ import Toast from 'react-native-toast-message';
 
 import { ROUTES } from '@/navigation';
 import { AppBadge, AppButton, AppCard, AppFormStatus, AppLogo } from '@/components/ui';
-import { registerUser } from '@/services/authApi';
+import { requestRegisterOtp } from '@/services/authApi';
 import { authValidationRules, getConfirmPasswordRules } from '@/utils/validators';
 
 import { AuthFormField } from './components/AuthFormField';
@@ -36,8 +36,8 @@ export const RegisterScreen = () => {
         setFormError('');
 
         try {
-            await registerUser(values);
-            const successMessage = 'Your account has been created successfully. Please login to continue.';
+            await requestRegisterOtp(values);
+            const successMessage = 'Verification code sent successfully.';
 
             setFormMessage(successMessage);
             Toast.show({
@@ -50,10 +50,10 @@ export const RegisterScreen = () => {
                 },
             });
             reset();
-
-            setTimeout(() => {
-                navigation.navigate(ROUTES.LOGIN);
-            }, 1200);
+            navigation.navigate(ROUTES.OTP_VERIFICATION, {
+                email: values.email,
+                purpose: 'register',
+            });
         } catch (error) {
             const errorMessage = error.message || 'Registration failed. Please try again.';
 

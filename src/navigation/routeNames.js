@@ -6,6 +6,7 @@ export const ROUTES = {
   SPLASH: 'Splash',
   LOGIN: 'Login',
   REGISTER: 'Register',
+  OTP_VERIFICATION: 'OtpVerification',
   FORGOT_PASSWORD: 'ForgotPassword',
   RESET_PASSWORD: 'ResetPassword',
   MAIN_TABS: 'MainTabs',
