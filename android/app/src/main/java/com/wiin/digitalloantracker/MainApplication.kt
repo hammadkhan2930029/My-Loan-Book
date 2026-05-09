@@ -1,4 +1,4 @@
-package com.digitalloantracker
+package com.wiin.digitalloantracker
 
 import android.app.Application
 import com.facebook.react.PackageList

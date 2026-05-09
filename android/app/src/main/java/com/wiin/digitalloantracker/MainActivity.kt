@@ -1,4 +1,4 @@
-package com.digitalloantracker
+package com.wiin.digitalloantracker
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
