@@ -2,11 +2,14 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import Toast from 'react-native-toast-message';
 
 import { AppButton, AppCard, AppListState, AppLoader } from '@/components/ui';
 import { ROUTES, useAuth } from '@/navigation';
+import { getContacts } from '@/services/contactApi';
 import { getDashboard } from '@/services/dashboardApi';
+import { getNotifications, markNotificationAsRead } from '@/services/notificationApi';
 import {
     approveRepaymentRequest,
     confirmLoanRequest,
@@ -18,6 +21,69 @@ import { DashboardContactCard } from './components/DashboardContactCard';
 import { DashboardSummaryCard } from './components/DashboardSummaryCard';
 import { ReportsDonutChart } from './components/ReportsDonutChart';
 
+const formatRelativeTime = value => {
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return 'Recently';
+    }
+
+    const diffMs = Date.now() - date.getTime();
+    const minute = 60 * 1000;
+    const hour = 60 * minute;
+    const day = 24 * hour;
+
+    if (diffMs < hour) {
+        const minutes = Math.max(1, Math.round(diffMs / minute));
+        return `${minutes} min ago`;
+    }
+
+    if (diffMs < day) {
+        const hours = Math.max(1, Math.round(diffMs / hour));
+        return `${hours} hr ago`;
+    }
+
+    if (diffMs < 2 * day) {
+        return 'Yesterday';
+    }
+
+    return new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+    }).format(date);
+};
+
+const notificationTheme = {
+    loan_assigned: {
+        accent: 'bg-accent-400',
+        icon: 'cash-outline',
+    },
+    loan_confirmed: {
+        accent: 'bg-primary-500',
+        icon: 'checkmark-circle-outline',
+    },
+    loan_rejected: {
+        accent: 'bg-danger',
+        icon: 'close-circle-outline',
+    },
+    payment_submitted: {
+        accent: 'bg-accent-400',
+        icon: 'receipt-outline',
+    },
+    payment_confirmed: {
+        accent: 'bg-primary-500',
+        icon: 'checkmark-done-outline',
+    },
+    payment_rejected: {
+        accent: 'bg-danger',
+        icon: 'close-circle-outline',
+    },
+    contact_added: {
+        accent: 'bg-primary-500',
+        icon: 'people-outline',
+    },
+};
+
 export const DashboardScreen = () => {
     const navigation = useNavigation();
     const { session } = useAuth();
@@ -25,8 +91,11 @@ export const DashboardScreen = () => {
     const profileName = profile.fullName || 'Digital Loan Tracker User';
     const firstName = profileName.split(' ').filter(Boolean)[0] || profileName;
     const [dashboard, setDashboard] = useState(null);
+    const [notifications, setNotifications] = useState([]);
+    const [notificationContacts, setNotificationContacts] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [approvingTransactionId, setApprovingTransactionId] = useState('');
+    const [markingNotificationId, setMarkingNotificationId] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
 
     const loadDashboard = useCallback(async () => {
@@ -34,12 +103,27 @@ export const DashboardScreen = () => {
         setErrorMessage('');
 
         try {
-            const result = await getDashboard();
-            setDashboard(result?.dashboard || {});
+            const [dashboardResult, notificationsResult, contactsResult] = await Promise.all([
+                getDashboard(),
+                getNotifications(),
+                getContacts(),
+            ]);
+            const nextNotifications = Array.isArray(notificationsResult?.data)
+                ? notificationsResult.data
+                : Array.isArray(notificationsResult?.notifications)
+                    ? notificationsResult.notifications
+                    : [];
+            const nextContacts = Array.isArray(contactsResult?.contacts) ? contactsResult.contacts : [];
+
+            setDashboard(dashboardResult?.dashboard || {});
+            setNotifications(nextNotifications);
+            setNotificationContacts(nextContacts);
         } catch (error) {
             const nextErrorMessage = error.message || 'Could not load dashboard data.';
 
             setDashboard(null);
+            setNotifications([]);
+            setNotificationContacts([]);
             setErrorMessage(nextErrorMessage);
             Toast.show({
                 type: 'customToast',
@@ -71,6 +155,24 @@ export const DashboardScreen = () => {
     const recentActivity = Array.isArray(dashboard?.recentActivity)
         ? dashboard.recentActivity
         : [];
+    const topNotifications = useMemo(
+        () =>
+            notifications.filter(
+                item => item.status === 'unread' && item.type !== 'report' && item.type !== 'monthly_report',
+            ),
+        [notifications],
+    );
+    const contactIdByUserId = useMemo(
+        () =>
+            notificationContacts.reduce((lookup, item) => {
+                if (item?.contactUserId && item?.id) {
+                    lookup[item.contactUserId] = item.id;
+                }
+
+                return lookup;
+            }, {}),
+        [notificationContacts],
+    );
     const summaryCards = useMemo(() => {
         if (!summary) {
             return [];
@@ -93,6 +195,78 @@ export const DashboardScreen = () => {
             },
         ];
     }, [summary]);
+
+    const refreshHeaderBadge = useCallback(() => {
+        navigation.setParams({
+            notificationRefreshKey: Date.now(),
+        });
+    }, [navigation]);
+
+    const navigateFromNotification = useCallback(
+        notification => {
+            const senderContactId = contactIdByUserId[notification?.senderId];
+
+            if (
+                senderContactId &&
+                [
+                    'loan_assigned',
+                    'loan_confirmed',
+                    'loan_rejected',
+                    'payment_submitted',
+                    'payment_confirmed',
+                    'payment_rejected',
+                    'contact_added',
+                ].includes(notification?.type)
+            ) {
+                navigation.navigate(ROUTES.CONTACT_DETAIL, {
+                    contactId: senderContactId,
+                });
+                return;
+            }
+
+            navigation.navigate(ROUTES.NOTIFICATIONS);
+        },
+        [contactIdByUserId, navigation],
+    );
+
+    const handleNotificationAction = async (notification, shouldNavigate) => {
+        if (!notification?.id || notification.status === 'read') {
+            if (shouldNavigate) {
+                navigateFromNotification(notification);
+            }
+
+            return;
+        }
+
+        setMarkingNotificationId(notification.id);
+
+        try {
+            await markNotificationAsRead(notification.id);
+            setNotifications(current =>
+                current.map(item =>
+                    item.id === notification.id ? { ...item, status: 'read' } : item,
+                ),
+            );
+            refreshHeaderBadge();
+
+            if (shouldNavigate) {
+                navigateFromNotification(notification);
+            }
+        } catch (error) {
+            Toast.show({
+                type: 'customToast',
+                text1: 'Error',
+                text2: error.message || 'Could not update notification.',
+                visibilityTime: 3500,
+                props: {
+                    bgColor: '#ffffff',
+                    borderColor: '#d95f70',
+                },
+            });
+        } finally {
+            setMarkingNotificationId('');
+        }
+    };
 
     const handleApproveRepayment = async transaction => {
         setApprovingTransactionId(transaction.id);
@@ -194,6 +368,62 @@ export const DashboardScreen = () => {
                     </View>
                 ) : (
                     <>
+                        {topNotifications.length ? (
+                            <View className="gap-3">
+                                {topNotifications.slice(0, 3).map(item => {
+                                    const theme = notificationTheme[item.type] || notificationTheme.contact_added;
+                                    const isUpdating = markingNotificationId === item.id;
+
+                                    return (
+                                        <Pressable
+                                            key={item.id}
+                                            className="overflow-hidden rounded-[24px] border border-border bg-surface px-4 py-4 shadow-card"
+                                            hitSlop={6}
+                                            onPress={() => handleNotificationAction(item, true)}>
+                                            <View className="flex-row items-start gap-3">
+                                                <View
+                                                    className={`h-12 w-12 items-center justify-center rounded-full ${theme.accent}`}>
+                                                    <Ionicons color="#ffffff" name={theme.icon} size={20} />
+                                                </View>
+
+                                                <View className="flex-1">
+                                                    <View className="flex-row items-start justify-between gap-3">
+                                                        <View className="flex-1">
+                                                            <Text className="text-body font-semibold text-textPrimary">
+                                                                {item.title}
+                                                            </Text>
+                                                            <Text className="mt-1 text-caption font-normal text-textSecondary">
+                                                                {item.message}
+                                                            </Text>
+                                                        </View>
+
+                                                        <Pressable
+                                                            className="h-8 w-8 items-center justify-center rounded-full bg-surfaceMuted"
+                                                            hitSlop={6}
+                                                            onPress={event => {
+                                                                event.stopPropagation();
+                                                                handleNotificationAction(item, false);
+                                                            }}>
+                                                            <Ionicons color="#6b7280" name="close" size={16} />
+                                                        </Pressable>
+                                                    </View>
+
+                                                    <View className="mt-3 flex-row items-center justify-between gap-3">
+                                                        <Text className="text-caption font-normal text-textMuted">
+                                                            {formatRelativeTime(item.createdAt)}
+                                                        </Text>
+                                                        <Text className="text-caption font-semibold text-primary-500">
+                                                            {isUpdating ? 'Updating...' : 'Tap to open'}
+                                                        </Text>
+                                                    </View>
+                                                </View>
+                                            </View>
+                                        </Pressable>
+                                    );
+                                })}
+                            </View>
+                        ) : null}
+
                         <View className="flex-row items-end gap-3">
                             {summaryCards.length ? (
                                 summaryCards.map(card => <DashboardSummaryCard key={card.id} {...card} />)
@@ -398,9 +628,13 @@ export const DashboardScreen = () => {
                             <View className="flex-row items-center justify-between">
                                 <Text className="text-section font-semibold text-textPrimary">Recent Activity</Text>
                                 <Pressable
+                                    className="flex-row items-center gap-1 rounded-full px-1 py-1"
                                     hitSlop={8}
                                     onPress={() => navigation.navigate(ROUTES.TRANSACTION_HISTORY)}>
-                                    <Text className="text-caption font-normal text-textSecondary">See all</Text>
+                                    <Text className="text-caption font-semibold text-primary-500">
+                                        Open history
+                                    </Text>
+                                    <Ionicons color="#203049" name="chevron-forward" size={14} />
                                 </Pressable>
                             </View>
 

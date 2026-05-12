@@ -18,6 +18,7 @@ import {
 import { ROUTES } from '@/navigation';
 import { getContacts } from '@/services/contactApi';
 import { createTransaction } from '@/services/transactionApi';
+import { formatAmountInput, unformatAmountInput } from '@/utils/transactions';
 
 import { PeopleContactRow, TransactionTypeToggle } from './components';
 
@@ -54,6 +55,8 @@ const getMonthLabel = value =>
         year: 'numeric',
     }).format(value);
 
+const createDefaultLoanDate = () => new Date();
+
 const buildCalendarDays = monthDate => {
     const year = monthDate.getFullYear();
     const month = monthDate.getMonth();
@@ -77,6 +80,7 @@ export const AddTransactionScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
     const initialContactId = route.params?.contactId;
+    const defaultLoanDate = createDefaultLoanDate();
     const hasAppliedInitialContact = useRef(false);
     const [contacts, setContacts] = useState([]);
     const [selectedContact, setSelectedContact] = useState(null);
@@ -91,7 +95,7 @@ export const AddTransactionScreen = () => {
     const [isCalendarOpen, setIsCalendarOpen] = useState(false);
     const [isCurrencyPickerOpen, setIsCurrencyPickerOpen] = useState(false);
     const [currencyQuery, setCurrencyQuery] = useState('');
-    const [selectedDate, setSelectedDate] = useState(null);
+    const [selectedDate, setSelectedDate] = useState(defaultLoanDate);
     const [selectedDueDate, setSelectedDueDate] = useState(null);
     const [calendarMonth, setCalendarMonth] = useState(new Date());
     const [activeCalendarField, setActiveCalendarField] = useState('date');
@@ -102,7 +106,7 @@ export const AddTransactionScreen = () => {
     const [form, setForm] = useState({
         amount: '',
         currency: 'PKR',
-        date: '',
+        date: formatDisplayDate(defaultLoanDate),
         dueDate: '',
         monthlyPaymentDay: '',
         note: '',
@@ -290,7 +294,7 @@ export const AddTransactionScreen = () => {
     };
 
     const handleSaveTransaction = async () => {
-        const trimmedAmount = form.amount.trim().replace(/,/g, '');
+        const trimmedAmount = unformatAmountInput(form.amount.trim());
         const parsedAmount = Number(trimmedAmount);
         const parsedDate = selectedDate;
         const parsedDueDate = selectedDueDate;
@@ -353,10 +357,12 @@ export const AddTransactionScreen = () => {
             });
             const successMessage = `${selectedContact.name} will be notified. This loan will be added after confirmation.`;
 
+            const nextDefaultLoanDate = createDefaultLoanDate();
+
             setForm({
                 amount: '',
                 currency: 'PKR',
-                date: '',
+                date: formatDisplayDate(nextDefaultLoanDate),
                 dueDate: '',
                 monthlyPaymentDay: '',
                 note: '',
@@ -364,9 +370,9 @@ export const AddTransactionScreen = () => {
             });
             setSelectedContact(null);
             setContactQuery('');
-            setSelectedDate(null);
+            setSelectedDate(nextDefaultLoanDate);
             setSelectedDueDate(null);
-            setCalendarMonth(new Date());
+            setCalendarMonth(nextDefaultLoanDate);
             setAttachmentPreview({
                 name: '',
                 uri: '',
@@ -554,7 +560,12 @@ export const AddTransactionScreen = () => {
                                         keyboardType="numeric"
                                         label="Amount"
                                         onBlur={() => setFocusedField('')}
-                                        onChangeText={amount => setForm(current => ({ ...current, amount }))}
+                                        onChangeText={amount =>
+                                            setForm(current => ({
+                                                ...current,
+                                                amount: formatAmountInput(amount),
+                                            }))
+                                        }
                                         onFocus={() => setFocusedField('amount')}
                                         placeholder="Enter amount"
                                         value={form.amount}

@@ -52,7 +52,7 @@ module.exports = {
         title: ['24px', {lineHeight: '30px'}],
         section: ['18px', {lineHeight: '24px'}],
         body: ['15px', {lineHeight: '22px'}],
-        caption: ['13px', {lineHeight: '18px'}],
+        caption: ['12px', {lineHeight: '18px'}],
       },
       boxShadow: {
         soft: '0 8px 24px rgba(32, 48, 73, 0.08)',

@@ -1,5 +1,6 @@
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const phonePattern = /^\+?[0-9\s\-()]{10,20}$/;
+const localPhoneDigitsPattern = /^[1-9][0-9]{6,14}$/;
 
 export const authValidationRules = {
   fullName: {
@@ -20,12 +21,28 @@ export const authValidationRules = {
   },
   phone: {
     required: 'Phone number is required.',
+    validate: value => {
+      const digits = String(value || '').replace(/\D/g, '');
+
+      if (!digits) {
+        return 'Phone number is required.';
+      }
+
+      if (!localPhoneDigitsPattern.test(digits)) {
+        return 'Enter digits only, without starting 0.';
+      }
+
+      return true;
+    },
+  },
+  internationalPhone: {
+    required: 'Phone number is required.',
     pattern: {
       value: phonePattern,
       message: 'Enter a valid phone number.',
     },
     validate: value => {
-      const digits = value.replace(/\D/g, '');
+      const digits = String(value || '').replace(/\D/g, '');
       return digits.length >= 10 || 'Phone number must have at least 10 digits.';
     },
   },

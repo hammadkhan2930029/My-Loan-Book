@@ -17,7 +17,12 @@ import {
 import {ROUTES} from '@/navigation';
 import {getContact} from '@/services/contactApi';
 import {createRepaymentRequest, getTransactions} from '@/services/transactionApi';
-import {formatLedgerAmount, summarizeTransactions} from '@/utils/transactions';
+import {
+  formatAmountInput,
+  formatLedgerAmount,
+  summarizeTransactions,
+  unformatAmountInput,
+} from '@/utils/transactions';
 
 const currencyOptions = [
   {code: 'PKR', label: 'Pakistani Rupee'},
@@ -157,12 +162,8 @@ export const RecordRepaymentScreen = () => {
   };
 
   const handleAmountChange = value => {
-    const sanitizedValue = value.replace(/[^0-9.]/g, '');
-    const decimalParts = sanitizedValue.split('.');
-    const normalizedValue =
-      decimalParts.length > 2
-        ? `${decimalParts[0]}.${decimalParts.slice(1).join('')}`
-        : sanitizedValue;
+    const normalizedValue = formatAmountInput(value);
+    const rawAmountValue = unformatAmountInput(normalizedValue);
 
     if (!normalizedValue) {
       setForm(current => ({...current, amount: ''}));
@@ -170,7 +171,7 @@ export const RecordRepaymentScreen = () => {
       return;
     }
 
-    const parsedValue = Number(normalizedValue);
+    const parsedValue = Number(rawAmountValue);
 
     if (!Number.isFinite(parsedValue)) {
       setForm(current => ({...current, amount: normalizedValue}));
@@ -178,7 +179,7 @@ export const RecordRepaymentScreen = () => {
     }
 
     if (outstandingAmount > 0 && parsedValue > outstandingAmount) {
-      setForm(current => ({...current, amount: String(outstandingAmount)}));
+      setForm(current => ({...current, amount: formatAmountInput(String(outstandingAmount))}));
       setFormError(
         `You can enter up to ${formatLedgerAmount(outstandingAmount, summary.currency)} only.`,
       );
@@ -235,7 +236,7 @@ export const RecordRepaymentScreen = () => {
   };
 
   const handleSubmit = async () => {
-    const parsedAmount = Number(form.amount.trim().replace(/,/g, ''));
+    const parsedAmount = Number(unformatAmountInput(form.amount.trim()));
 
     setFormError('');
     setFormMessage('');

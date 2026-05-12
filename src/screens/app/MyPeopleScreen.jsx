@@ -23,11 +23,17 @@ const formatContact = contact => ({
   contactUserId: contact?.contactUserId,
   name: contact?.fullName || 'Unknown Contact',
   imageUri: contact?.profilePhoto,
-  summary: `Reg code ${contact?.reg_code || 'N/A'} - ready for ledger`,
+  summary: 'Ready for ledger',
   balance: 'PKR 0',
   balanceType: 'gave',
   variant: 'primary',
 });
+
+const normalizeRegCodeInput = value =>
+  String(value || '')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .toUpperCase()
+    .slice(0, 6);
 
 export const MyPeopleScreen = () => {
   const navigation = useNavigation();
@@ -81,7 +87,7 @@ export const MyPeopleScreen = () => {
   }, [formattedContacts, query]);
 
   const handleAddContact = async () => {
-    const normalizedRegCode = regCode.trim().toUpperCase();
+    const normalizedRegCode = normalizeRegCodeInput(regCode.trim());
 
     setFormMessage('');
     setFormError('');
@@ -151,14 +157,21 @@ export const MyPeopleScreen = () => {
         <AppCard variant="elevated">
           <View className="gap-4">
             <AppInput
-              autoCapitalize="characters"
+              autoCapitalize="none"
+              autoComplete="off"
+              autoCorrect={false}
+              contextMenuHidden
               helperText="Ask the other user for their 6-character registration code."
+              importantForAutofill="no"
               isFocused={isRegCodeFocused}
+              keyboardType="visible-password"
               label="Add Contact"
+              maxLength={6}
               onBlur={() => setIsRegCodeFocused(false)}
-              onChangeText={value => setRegCode(value.toUpperCase())}
+              onChangeText={value => setRegCode(normalizeRegCodeInput(value))}
               onFocus={() => setIsRegCodeFocused(true)}
               placeholder="Enter reg code"
+              textContentType="none"
               value={regCode}
               variant="filled"
             />

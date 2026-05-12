@@ -281,7 +281,7 @@ export const EditProfileScreen = () => {
                 label="Phone"
                 name="phone"
                 placeholder="+1 234 567 890"
-                rules={authValidationRules.phone}
+                rules={authValidationRules.internationalPhone}
                 setFocusedField={setFocusedField}
               />
             </View>

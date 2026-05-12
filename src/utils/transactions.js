@@ -1,13 +1,25 @@
 const formatCurrencyValue = (amount, currency = 'PKR') => {
   try {
-    return new Intl.NumberFormat('en-PK', {
-      style: 'currency',
-      currency,
+    const formattedNumber = new Intl.NumberFormat('en-US', {
       maximumFractionDigits: 0,
     }).format(Number(amount) || 0);
+
+    return `${currency} ${formattedNumber}`;
   } catch {
     return `${currency} ${Number(amount) || 0}`;
   }
+};
+
+const addThousandsSeparators = integerPart =>
+  integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+export const unformatAmountInput = value => String(value || '').replace(/,/g, '');
+
+export const formatAmountInput = value => {
+  const digitsOnlyValue = String(value || '').replace(/\D/g, '');
+  const normalizedInteger = digitsOnlyValue.replace(/^0+(?=\d)/, '') || digitsOnlyValue;
+
+  return normalizedInteger ? addThousandsSeparators(normalizedInteger) : '';
 };
 
 export const formatTransactionAmount = (amount, type = 'gave', currency = 'PKR') => {
