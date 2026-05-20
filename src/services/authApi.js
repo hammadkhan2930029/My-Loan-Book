@@ -92,3 +92,11 @@ export const changePassword = ({currentPassword, password, confirmPassword}) =>
       confirmPassword,
     },
   });
+
+export const updateFcmToken = ({fcmToken}) =>
+  apiRequest('/auth/fcm-token', {
+    method: 'PATCH',
+    data: {
+      fcmToken,
+    },
+  });

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "211819928988",
+    "project_id": "digital-loan-tracker",
+    "storage_bucket": "digital-loan-tracker.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:211819928988:android:c12932540c7586a7b5bc59",
+        "android_client_info": {
+          "package_name": "com.wiin.digitalloantracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCVvzBs2DBomuIQgeqjyTs0nwz3TCqBHA4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

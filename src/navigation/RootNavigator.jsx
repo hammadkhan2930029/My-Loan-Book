@@ -4,6 +4,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
 import {AppLoader} from '@/components/ui';
 import {clearAuthSession, getAuthSession, saveAuthSession} from '@/services/authStorage';
+import {registerDeviceForPushNotifications} from '@/services/pushNotificationService';
 
 import {AuthNavigator} from './AuthNavigator';
 import {AuthProvider} from './AuthContext';
@@ -43,6 +44,31 @@ export const RootNavigator = () => {
     await clearAuthSession();
     setSession(null);
   }, []);
+
+  useEffect(() => {
+    let unsubscribeTokenRefresh;
+    let isMounted = true;
+
+    if (!isAuthenticated) {
+      return undefined;
+    }
+
+    registerDeviceForPushNotifications().then(unsubscribe => {
+      if (isMounted) {
+        unsubscribeTokenRefresh = unsubscribe;
+      } else if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    });
+
+    return () => {
+      isMounted = false;
+
+      if (typeof unsubscribeTokenRefresh === 'function') {
+        unsubscribeTokenRefresh();
+      }
+    };
+  }, [isAuthenticated]);
 
   const authValue = useMemo(
     () => ({
