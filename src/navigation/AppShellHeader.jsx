@@ -97,7 +97,7 @@ export const AppShellHeader = ({navigation, options, route}) => {
   );
 
   return (
-    <View className="bg-background px-5 pb-4 pt-3">
+    <View className="bg-transparent px-5 pt-3">
       <View className="rounded-[28px] border border-border bg-surface px-4 py-4 shadow-card">
         <View className="flex-row items-center justify-between gap-3">
           <Pressable

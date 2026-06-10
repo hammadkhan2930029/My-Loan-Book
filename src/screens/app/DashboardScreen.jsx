@@ -345,7 +345,7 @@ export const DashboardScreen = () => {
         <SafeAreaView className="flex-1 bg-background">
             <ScrollView
                 bounces={false}
-                contentContainerClassName="flex-grow px-5 py-5 gap-6"
+                contentContainerClassName="flex-grow px-5 py-5 gap-6 "
                 showsVerticalScrollIndicator={false}>
                 <View className="gap-3">
                     <View>

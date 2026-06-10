@@ -60,6 +60,15 @@ export const getTransactionSubtitle = transaction => {
     parts.push(`Monthly on ${transaction.monthlyPaymentDay}`);
   }
 
+  if (transaction?.monthlyPaymentAmount) {
+    parts.push(
+      `Monthly ${formatCurrencyValue(
+        transaction.monthlyPaymentAmount,
+        transaction.currency,
+      )}`,
+    );
+  }
+
   if (transaction?.category === 'repayment') {
     parts.push(transaction?.status === 'pending' ? 'Repayment pending approval' : 'Repayment');
   } else if (transaction?.status === 'pending') {
@@ -83,6 +92,12 @@ export const mapTransactionToHistoryRow = transaction => ({
   note: [
     transaction.dueDate ? `Due ${formatTransactionDate(transaction.dueDate)}` : '',
     transaction.monthlyPaymentDay ? `Monthly on ${transaction.monthlyPaymentDay}` : '',
+    transaction.monthlyPaymentAmount
+      ? `Monthly ${formatCurrencyValue(
+          transaction.monthlyPaymentAmount,
+          transaction.currency,
+        )}`
+      : '',
     transaction.currency || 'PKR',
     transaction.note,
   ]
@@ -104,6 +119,12 @@ export const mapTransactionToContactRow = transaction => ({
         : '',
       transaction.dueDate ? `Return by ${formatTransactionDate(transaction.dueDate)}` : '',
       transaction.monthlyPaymentDay ? `Monthly on ${transaction.monthlyPaymentDay}` : '',
+      transaction.monthlyPaymentAmount
+        ? `Monthly ${formatCurrencyValue(
+            transaction.monthlyPaymentAmount,
+            transaction.currency,
+          )}`
+        : '',
       transaction.currency || 'PKR',
       transaction.note || '',
     ]

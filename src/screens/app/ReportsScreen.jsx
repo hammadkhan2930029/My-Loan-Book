@@ -6,8 +6,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AppBadge, AppCard, AppListItem, AppListState, AppLoader } from '@/components/ui';
 import { getReports } from '@/services/reportsApi';
 
-import { ReportsDonutChart } from './components';
-
 const months = [
     { label: 'All', value: 0 },
     { label: 'Jan', value: 1 },
@@ -131,10 +129,19 @@ export const ReportsScreen = () => {
     );
 
     const summary = reports?.summary && typeof reports.summary === 'object' ? reports.summary : null;
-    const historyBuckets =
-        reports?.history && typeof reports.history === 'object'
-            ? reports.history
-            : { all: [], loans_given: [], returned_to_me: [], loans_taken: [], repaid_by_me: [] };
+    const historyBuckets = useMemo(
+        () =>
+            reports?.history && typeof reports.history === 'object'
+                ? reports.history
+                : {
+                    all: [],
+                    loans_given: [],
+                    returned_to_me: [],
+                    loans_taken: [],
+                    repaid_by_me: [],
+                },
+        [reports],
+    );
     const history = Array.isArray(historyBuckets.all) ? historyBuckets.all : [];
     const isYearView = selectedMonth === 0;
     const selectedMonthLabel = formatMonthLabel(selectedMonth);
@@ -143,6 +150,12 @@ export const ReportsScreen = () => {
         () => (summary ? summary.rawLoansGiven + summary.rawLoansTaken : 0),
         [summary],
     );
+    const gavePercentage = chartTotal > 0
+        ? Math.min((summary.rawLoansGiven / chartTotal) * 100, 100)
+        : 0;
+    const tookPercentage = chartTotal > 0
+        ? Math.min((summary.rawLoansTaken / chartTotal) * 100, 100)
+        : 0;
     const summaryTiles = useMemo(() => buildSummaryTiles(summary), [summary]);
     const filteredHistory = useMemo(() => {
         const nextItems = historyBuckets[activeBreakdown] || historyBuckets.all || [];
@@ -278,15 +291,47 @@ export const ReportsScreen = () => {
                                     <AppBadge label={summary.totalEntries ? 'Active' : 'Quiet'} variant="primary" />
                                 </View>
 
-                                <View className="items-center">
-                                    <ReportsDonutChart
-                                        centerLabel={isYearView ? 'Selected Year' : 'Monthly Total'}
-                                        centerValue={summary.totalDisplay}
-                                        footerLabel={isYearView ? 'year summary preview' : 'gave vs took'}
-                                        gave={summary.rawLoansGiven}
-                                        took={summary.rawLoansTaken}
-                                        total={chartTotal}
-                                    />
+                                <View className="items-center py-2">
+                                    <Text className="text-caption font-normal text-textSecondary">
+                                        {isYearView ? 'Selected Year' : 'Monthly Total'}
+                                    </Text>
+                                    <Text className="mt-2 text-title font-bold tracking-[-0.3px] text-textPrimary">
+                                        {summary.totalDisplay}
+                                    </Text>
+                                    <Text className="mt-2 text-caption font-normal text-textMuted">
+                                        Gave vs Took
+                                    </Text>
+                                </View>
+
+                                <View className="gap-3">
+                                    <View className="h-4 flex-row overflow-hidden rounded-full bg-surfaceMuted">
+                                        {gavePercentage > 0 ? (
+                                            <View
+                                                className="h-full bg-primary-500"
+                                                style={{width: `${gavePercentage}%`}}
+                                            />
+                                        ) : null}
+                                        {tookPercentage > 0 ? (
+                                            <View
+                                                className="h-full bg-accent-400"
+                                                style={{width: `${tookPercentage}%`}}
+                                            />
+                                        ) : null}
+                                    </View>
+                                    <View className="flex-row items-center justify-between">
+                                        <View className="flex-row items-center gap-2">
+                                            <View className="h-2.5 w-2.5 rounded-full bg-primary-500" />
+                                            <Text className="text-caption font-normal text-textSecondary">
+                                                Gave {Math.round(gavePercentage)}%
+                                            </Text>
+                                        </View>
+                                        <View className="flex-row items-center gap-2">
+                                            <View className="h-2.5 w-2.5 rounded-full bg-accent-400" />
+                                            <Text className="text-caption font-normal text-textSecondary">
+                                                Took {Math.round(tookPercentage)}%
+                                            </Text>
+                                        </View>
+                                    </View>
                                 </View>
 
                                 <View className="flex-row gap-4">
@@ -388,7 +433,10 @@ export const ReportsScreen = () => {
                                                         </Text>
                                                     </View>
                                                 </Pressable>
-                                                <AppBadge label={`${filteredHistory.length} entries`} variant="accent" />
+                                                <AppBadge
+                                                    label={`${filteredHistory.length} Entry(s)`}
+                                                    variant="accent"
+                                                />
                                             </View>
                                         </View>
                                         {filteredHistory.map((item, index) => (

@@ -26,13 +26,20 @@ const formatContact = contact => ({
     id: contact?.id || '',
     name: contact?.fullName || 'Unknown Contact',
     imageUri: contact?.profilePhoto,
-    summary: `Reg code ${contact?.reg_code || 'N/A'}`,
     balance: 'PKR 0',
     balanceType: 'gave',
     variant: 'primary',
 });
 
 const dayLabels = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+const monthOptions = Array.from({ length: 12 }, (_, month) => ({
+    label: new Intl.DateTimeFormat('en-US', { month: 'short' }).format(
+        new Date(2026, month, 1),
+    ),
+    value: month,
+}));
+const currentYear = new Date().getFullYear();
+const yearOptions = Array.from({ length: 61 }, (_, index) => currentYear - 30 + index);
 const currencyOptions = [
     { code: 'PKR', label: 'Pakistani Rupee' },
     { code: 'USD', label: 'US Dollar' },
@@ -46,12 +53,6 @@ const formatDisplayDate = value =>
     new Intl.DateTimeFormat('en-US', {
         month: 'short',
         day: 'numeric',
-        year: 'numeric',
-    }).format(value);
-
-const getMonthLabel = value =>
-    new Intl.DateTimeFormat('en-US', {
-        month: 'long',
         year: 'numeric',
     }).format(value);
 
@@ -98,6 +99,7 @@ export const AddTransactionScreen = () => {
     const [selectedDate, setSelectedDate] = useState(defaultLoanDate);
     const [selectedDueDate, setSelectedDueDate] = useState(null);
     const [calendarMonth, setCalendarMonth] = useState(new Date());
+    const [calendarPickerMode, setCalendarPickerMode] = useState('');
     const [activeCalendarField, setActiveCalendarField] = useState('date');
     const [attachmentPreview, setAttachmentPreview] = useState({
         name: '',
@@ -109,6 +111,7 @@ export const AddTransactionScreen = () => {
         date: formatDisplayDate(defaultLoanDate),
         dueDate: '',
         monthlyPaymentDay: '',
+        monthlyPaymentAmount: '',
         note: '',
         attachment: '',
     });
@@ -182,6 +185,7 @@ export const AddTransactionScreen = () => {
         setFocusedField('');
         setActiveCalendarField('date');
         setCalendarMonth(selectedDate || new Date());
+        setCalendarPickerMode('');
         setIsCalendarOpen(true);
     };
 
@@ -189,6 +193,7 @@ export const AddTransactionScreen = () => {
         setFocusedField('');
         setActiveCalendarField('dueDate');
         setCalendarMonth(selectedDueDate || selectedDate || new Date());
+        setCalendarPickerMode('');
         setIsCalendarOpen(true);
     };
 
@@ -208,7 +213,22 @@ export const AddTransactionScreen = () => {
             }));
         }
         setFormError('');
+        setCalendarPickerMode('');
         setIsCalendarOpen(false);
+    };
+
+    const handleSelectCalendarMonth = month => {
+        setCalendarMonth(
+            current => new Date(current.getFullYear(), month, 1),
+        );
+        setCalendarPickerMode('');
+    };
+
+    const handleSelectCalendarYear = year => {
+        setCalendarMonth(
+            current => new Date(year, current.getMonth(), 1),
+        );
+        setCalendarPickerMode('');
     };
 
     const handlePickAttachment = async () => {
@@ -302,6 +322,12 @@ export const AddTransactionScreen = () => {
         const parsedMonthlyPaymentDay = trimmedMonthlyPaymentDay
             ? Number(trimmedMonthlyPaymentDay)
             : null;
+        const trimmedMonthlyPaymentAmount = unformatAmountInput(
+            form.monthlyPaymentAmount.trim(),
+        );
+        const parsedMonthlyPaymentAmount = trimmedMonthlyPaymentAmount
+            ? Number(trimmedMonthlyPaymentAmount)
+            : null;
 
         setFormMessage('');
         setFormError('');
@@ -341,6 +367,20 @@ export const AddTransactionScreen = () => {
             return;
         }
 
+        if (
+            trimmedMonthlyPaymentAmount &&
+            (!Number.isFinite(parsedMonthlyPaymentAmount) ||
+                parsedMonthlyPaymentAmount <= 0)
+        ) {
+            setFormError('Monthly payment amount must be greater than zero.');
+            return;
+        }
+
+        if (parsedMonthlyPaymentAmount > parsedAmount) {
+            setFormError('Monthly payment amount cannot exceed the total loan amount.');
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {
@@ -352,6 +392,9 @@ export const AddTransactionScreen = () => {
                 transactionDate: parsedDate.toISOString(),
                 dueDate: parsedDueDate.toISOString(),
                 ...(parsedMonthlyPaymentDay ? { monthlyPaymentDay: parsedMonthlyPaymentDay } : {}),
+                ...(parsedMonthlyPaymentAmount
+                    ? { monthlyPaymentAmount: parsedMonthlyPaymentAmount }
+                    : {}),
                 note: form.note.trim(),
                 attachment: form.attachment,
             });
@@ -365,6 +408,7 @@ export const AddTransactionScreen = () => {
                 date: formatDisplayDate(nextDefaultLoanDate),
                 dueDate: '',
                 monthlyPaymentDay: '',
+                monthlyPaymentAmount: '',
                 note: '',
                 attachment: '',
             });
@@ -640,6 +684,24 @@ export const AddTransactionScreen = () => {
                                     />
 
                                     <AppInput
+                                        helperText="Optional: enter the amount expected on each monthly payment date."
+                                        isFocused={focusedField === 'monthlyPaymentAmount'}
+                                        keyboardType="number-pad"
+                                        label="Monthly Payment Amount"
+                                        onBlur={() => setFocusedField('')}
+                                        onChangeText={monthlyPaymentAmount =>
+                                            setForm(current => ({
+                                                ...current,
+                                                monthlyPaymentAmount:
+                                                    formatAmountInput(monthlyPaymentAmount),
+                                            }))
+                                        }
+                                        onFocus={() => setFocusedField('monthlyPaymentAmount')}
+                                        placeholder="Optional amount"
+                                        value={form.monthlyPaymentAmount}
+                                    />
+
+                                    <AppInput
                                         helperText="Add a short note to describe this transaction."
                                         isFocused={focusedField === 'note'}
                                         label="Note"
@@ -832,10 +894,16 @@ export const AddTransactionScreen = () => {
                 animationType="fade"
                 transparent
                 visible={isCalendarOpen}
-                onRequestClose={() => setIsCalendarOpen(false)}>
+                onRequestClose={() => {
+                    setCalendarPickerMode('');
+                    setIsCalendarOpen(false);
+                }}>
                 <Pressable
                     className="flex-1 items-center justify-center bg-primary-500/30 px-6"
-                    onPress={() => setIsCalendarOpen(false)}>
+                    onPress={() => {
+                        setCalendarPickerMode('');
+                        setIsCalendarOpen(false);
+                    }}>
                     <Pressable
                         className="w-full max-w-[360px] rounded-[28px] bg-background px-5 py-5 shadow-card"
                         onPress={() => { }}>
@@ -843,7 +911,12 @@ export const AddTransactionScreen = () => {
                             <Text className="text-section font-semibold text-textPrimary">
                                 {activeCalendarField === 'dueDate' ? 'Select Return End Date' : 'Select Loan Date'}
                             </Text>
-                            <Pressable hitSlop={6} onPress={() => setIsCalendarOpen(false)}>
+                            <Pressable
+                                hitSlop={6}
+                                onPress={() => {
+                                    setCalendarPickerMode('');
+                                    setIsCalendarOpen(false);
+                                }}>
                                 <Text className="text-caption font-semibold text-primary-500">Close</Text>
                             </Pressable>
                         </View>
@@ -860,9 +933,49 @@ export const AddTransactionScreen = () => {
                                 <Text className="text-body font-semibold text-primary-500">{'<'}</Text>
                             </Pressable>
 
-                            <Text className="text-body font-semibold text-textPrimary">
-                                {getMonthLabel(calendarMonth)}
-                            </Text>
+                            <View className="flex-row items-center gap-2">
+                                <Pressable
+                                    className={`rounded-full border px-4 py-2 ${
+                                        calendarPickerMode === 'month'
+                                            ? 'border-primary-500 bg-primary-500'
+                                            : 'border-border bg-surface'
+                                    }`}
+                                    onPress={() =>
+                                        setCalendarPickerMode(current =>
+                                            current === 'month' ? '' : 'month',
+                                        )
+                                    }>
+                                    <Text
+                                        className={`text-caption font-semibold ${
+                                            calendarPickerMode === 'month'
+                                                ? 'text-white'
+                                                : 'text-textPrimary'
+                                        }`}>
+                                        {monthOptions[calendarMonth.getMonth()].label}
+                                    </Text>
+                                </Pressable>
+
+                                <Pressable
+                                    className={`rounded-full border px-4 py-2 ${
+                                        calendarPickerMode === 'year'
+                                            ? 'border-primary-500 bg-primary-500'
+                                            : 'border-border bg-surface'
+                                    }`}
+                                    onPress={() =>
+                                        setCalendarPickerMode(current =>
+                                            current === 'year' ? '' : 'year',
+                                        )
+                                    }>
+                                    <Text
+                                        className={`text-caption font-semibold ${
+                                            calendarPickerMode === 'year'
+                                                ? 'text-white'
+                                                : 'text-textPrimary'
+                                        }`}>
+                                        {calendarMonth.getFullYear()}
+                                    </Text>
+                                </Pressable>
+                            </View>
 
                             <Pressable
                                 hitSlop={6}
@@ -876,46 +989,109 @@ export const AddTransactionScreen = () => {
                             </Pressable>
                         </View>
 
-                        <View className="mt-5 flex-row flex-wrap">
-                            {dayLabels.map(label => (
-                                <View key={label} className="mb-2 w-[14.28%] items-center">
-                                    <Text className="text-caption font-semibold text-textMuted">{label}</Text>
-                                </View>
-                            ))}
+                        {calendarPickerMode === 'month' ? (
+                            <View className="mt-5 flex-row flex-wrap">
+                                {monthOptions.map(month => {
+                                    const isSelected = month.value === calendarMonth.getMonth();
 
-                            {calendarDays.map((day, index) => {
-                                if (!day) {
-                                    return <View key={`empty-${index}`} className="mb-2 w-[14.28%] h-11" />;
-                                }
-
-                                const isSelected =
-                                    selectedDate &&
-                                    day.getFullYear() === selectedDate.getFullYear() &&
-                                    day.getMonth() === selectedDate.getMonth() &&
-                                    day.getDate() === selectedDate.getDate();
-                                const isToday = day.toDateString() === new Date().toDateString();
-
-                                return (
-                                    <View key={day.toISOString()} className="mb-2 w-[14.28%] items-center">
-                                        <Pressable
-                                            className={`h-11 w-11 items-center justify-center rounded-full ${isSelected
-                                                ? 'bg-primary-500'
-                                                : isToday
-                                                    ? 'border border-primary-500 bg-primary-500'
-                                                    : 'bg-surface'
+                                    return (
+                                        <View key={month.value} className="mb-3 w-1/3 px-1.5">
+                                            <Pressable
+                                                className={`items-center rounded-2xl border py-3 ${
+                                                    isSelected
+                                                        ? 'border-primary-500 bg-primary-500'
+                                                        : 'border-border bg-surface'
                                                 }`}
-                                            hitSlop={4}
-                                            onPress={() => handleSelectDate(day)}>
-                                            <Text
-                                                className={`text-caption font-semibold ${isSelected || isToday ? 'text-white' : 'text-textPrimary'
+                                                onPress={() => handleSelectCalendarMonth(month.value)}>
+                                                <Text
+                                                    className={`text-caption font-semibold ${
+                                                        isSelected ? 'text-white' : 'text-textPrimary'
                                                     }`}>
-                                                {day.getDate()}
-                                            </Text>
-                                        </Pressable>
+                                                    {month.label}
+                                                </Text>
+                                            </Pressable>
+                                        </View>
+                                    );
+                                })}
+                            </View>
+                        ) : calendarPickerMode === 'year' ? (
+                            <ScrollView
+                                className="mt-5 max-h-[300px]"
+                                contentContainerClassName="flex-row flex-wrap"
+                                showsVerticalScrollIndicator={false}>
+                                {yearOptions.map(year => {
+                                    const isSelected = year === calendarMonth.getFullYear();
+
+                                    return (
+                                        <View key={year} className="mb-3 w-1/3 px-1.5">
+                                            <Pressable
+                                                className={`items-center rounded-2xl border py-3 ${
+                                                    isSelected
+                                                        ? 'border-primary-500 bg-primary-500'
+                                                        : 'border-border bg-surface'
+                                                }`}
+                                                onPress={() => handleSelectCalendarYear(year)}>
+                                                <Text
+                                                    className={`text-caption font-semibold ${
+                                                        isSelected ? 'text-white' : 'text-textPrimary'
+                                                    }`}>
+                                                    {year}
+                                                </Text>
+                                            </Pressable>
+                                        </View>
+                                    );
+                                })}
+                            </ScrollView>
+                        ) : (
+                            <View className="mt-5 flex-row flex-wrap">
+                                {dayLabels.map(label => (
+                                    <View key={label} className="mb-2 w-[14.28%] items-center">
+                                        <Text className="text-caption font-semibold text-textMuted">{label}</Text>
                                     </View>
-                                );
-                            })}
-                        </View>
+                                ))}
+
+                                {calendarDays.map((day, index) => {
+                                    if (!day) {
+                                        return <View key={`empty-${index}`} className="mb-2 h-11 w-[14.28%]" />;
+                                    }
+
+                                    const activeSelectedDate =
+                                        activeCalendarField === 'dueDate'
+                                            ? selectedDueDate
+                                            : selectedDate;
+                                    const isSelected =
+                                        activeSelectedDate &&
+                                        day.getFullYear() === activeSelectedDate.getFullYear() &&
+                                        day.getMonth() === activeSelectedDate.getMonth() &&
+                                        day.getDate() === activeSelectedDate.getDate();
+                                    const isToday = day.toDateString() === new Date().toDateString();
+
+                                    return (
+                                        <View key={day.toISOString()} className="mb-2 w-[14.28%] items-center">
+                                            <Pressable
+                                                className={`h-11 w-11 items-center justify-center rounded-full ${
+                                                    isSelected
+                                                        ? 'bg-primary-500'
+                                                        : isToday
+                                                            ? 'border border-primary-500 bg-primary-50'
+                                                            : 'bg-surface'
+                                                }`}
+                                                hitSlop={4}
+                                                onPress={() => handleSelectDate(day)}>
+                                                <Text
+                                                    className={`text-caption font-semibold ${
+                                                        isSelected
+                                                            ? 'text-white'
+                                                            : 'text-textPrimary'
+                                                    }`}>
+                                                    {day.getDate()}
+                                                </Text>
+                                            </Pressable>
+                                        </View>
+                                    );
+                                })}
+                            </View>
+                        )}
                     </Pressable>
                 </Pressable>
             </Modal>

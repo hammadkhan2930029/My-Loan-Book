@@ -13,6 +13,9 @@ import {
   AppCard,
 } from '@/components/ui';
 
+const APP_SHARE_MESSAGE =
+  'Digital Loan Tracker helps you track personal loans and repayments easily. Stay organized and keep every record at your fingertips.\n\nhttps://play.google.com/store/apps/details?id=com.wiin.digitalloantracker&pcampaignid=web_share';
+
 export const ProfileScreen = () => {
   const navigation = useNavigation();
   const {session, signOut} = useAuth();
@@ -44,8 +47,8 @@ export const ProfileScreen = () => {
   const handleShareApp = async () => {
     try {
       await Share.share({
-        message:
-          'Track personal loans and repayments easily with Digital Loan Tracker. Try the app and stay on top of every record.',
+        title: 'Digital Loan Tracker',
+        message: APP_SHARE_MESSAGE,
       });
     } catch (error) {
       Toast.show({

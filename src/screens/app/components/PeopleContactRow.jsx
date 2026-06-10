@@ -40,11 +40,16 @@ export const PeopleContactRow = ({
         <Text className={`text-body font-normal ${selected ? 'text-white' : 'text-textPrimary'}`}>
           {name}
         </Text>
-        <View className={peopleStyles.contactMeta}>
-          <Text className={`text-caption font-normal ${selected ? 'text-white/80' : 'text-textSecondary'}`}>
-            {summary}
-          </Text>
-        </View>
+        {summary ? (
+          <View className={peopleStyles.contactMeta}>
+            <Text
+              className={`text-caption font-normal ${
+                selected ? 'text-white/80' : 'text-textSecondary'
+              }`}>
+              {summary}
+            </Text>
+          </View>
+        ) : null}
       </View>
 
       <View className={peopleStyles.balanceWrap}>

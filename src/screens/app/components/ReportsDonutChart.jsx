@@ -12,8 +12,9 @@ export const ReportsDonutChart = ({
   took,
   total,
 }) => {
-  const size = 190;
-  const strokeWidth = 20;
+  const size = 240;
+  const strokeWidth = 22;
+  const centerContentWidth = size - strokeWidth * 4;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const gavePercent = total > 0 ? gave / total : 0;
@@ -60,15 +61,29 @@ export const ReportsDonutChart = ({
         />
       </Svg>
 
-      <View className="absolute items-center justify-center">
-        <Text className="text-caption font-normal text-textSecondary">{centerLabel}</Text>
-        <View className="mt-1">
-          <Text className="text-title font-bold tracking-[-0.3px] text-textPrimary">
+      <View
+        className="absolute items-center justify-center"
+        style={{width: centerContentWidth}}>
+        <Text
+          className="text-center text-caption font-normal text-textSecondary"
+          numberOfLines={1}>
+          {centerLabel}
+        </Text>
+        <View className="mt-2 w-full">
+          <Text
+            adjustsFontSizeToFit
+            className="text-center text-[20px] font-bold tracking-[-0.3px] text-textPrimary"
+            minimumFontScale={0.55}
+            numberOfLines={1}>
             {centerValue || `$${total}`}
           </Text>
         </View>
-        <View className="mt-1">
-          <Text className="text-caption font-normal text-textMuted">{footerLabel}</Text>
+        <View className="mt-2">
+          <Text
+            className="text-center text-caption font-normal text-textMuted"
+            numberOfLines={1}>
+            {footerLabel}
+          </Text>
         </View>
       </View>
     </View>
