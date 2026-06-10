@@ -4,6 +4,7 @@ export const ROUTES = {
   APP_DRAWER: 'AppDrawer',
   APP_STACK: 'AppStack',
   SPLASH: 'Splash',
+  BASE_CURRENCY: 'BaseCurrency',
   LOGIN: 'Login',
   REGISTER: 'Register',
   OTP_VERIFICATION: 'OtpVerification',

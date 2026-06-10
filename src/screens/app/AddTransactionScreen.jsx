@@ -15,6 +15,7 @@ import {
     AppListState,
     AppLoader,
 } from '@/components/ui';
+import { useCurrency } from '@/context/CurrencyContext';
 import { ROUTES } from '@/navigation';
 import { getContacts } from '@/services/contactApi';
 import { createTransaction } from '@/services/transactionApi';
@@ -26,7 +27,9 @@ const formatContact = contact => ({
     id: contact?.id || '',
     name: contact?.fullName || 'Unknown Contact',
     imageUri: contact?.profilePhoto,
-    balance: 'PKR 0',
+    balance: `${contact?.selectedCurrency || ''} ${
+        contact?.summary?.remainingBalance || 0
+    }`.trim(),
     balanceType: 'gave',
     variant: 'primary',
 });
@@ -48,6 +51,11 @@ const currencyOptions = [
     { code: 'EUR', label: 'Euro' },
     { code: 'GBP', label: 'British Pound' },
 ];
+const normalizeCurrencyCode = value =>
+    String(value || '')
+        .replace(/[^a-zA-Z]/g, '')
+        .toUpperCase()
+        .slice(0, 3);
 
 const formatDisplayDate = value =>
     new Intl.DateTimeFormat('en-US', {
@@ -80,6 +88,7 @@ const buildCalendarDays = monthDate => {
 export const AddTransactionScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
+    const { selectedCurrency } = useCurrency();
     const initialContactId = route.params?.contactId;
     const defaultLoanDate = createDefaultLoanDate();
     const hasAppliedInitialContact = useRef(false);
@@ -107,7 +116,7 @@ export const AddTransactionScreen = () => {
     });
     const [form, setForm] = useState({
         amount: '',
-        currency: 'PKR',
+        currency: selectedCurrency || '',
         date: formatDisplayDate(defaultLoanDate),
         dueDate: '',
         monthlyPaymentDay: '',
@@ -121,7 +130,9 @@ export const AddTransactionScreen = () => {
         setFormError('');
 
         try {
-            const result = await getContacts();
+            const result = await getContacts({
+                currency: selectedCurrency,
+            });
             const nextContacts = Array.isArray(result?.contacts) ? result.contacts : [];
 
             setContacts(nextContacts);
@@ -140,11 +151,18 @@ export const AddTransactionScreen = () => {
         } finally {
             setIsLoadingContacts(false);
         }
-    }, [initialContactId]);
+    }, [initialContactId, selectedCurrency]);
 
     useEffect(() => {
         loadContacts();
     }, [loadContacts]);
+
+    useEffect(() => {
+        setForm(current => ({
+            ...current,
+            currency: selectedCurrency || current.currency,
+        }));
+    }, [selectedCurrency]);
 
     const formattedContacts = useMemo(
         () => (Array.isArray(contacts) ? contacts : []).map(formatContact),
@@ -174,6 +192,10 @@ export const AddTransactionScreen = () => {
             currency.code.toLowerCase().includes(normalizedQuery),
         );
     }, [currencyQuery]);
+    const customCurrencyCode = normalizeCurrencyCode(currencyQuery);
+    const canUseCustomCurrency =
+        customCurrencyCode.length === 3 &&
+        !currencyOptions.some(currency => currency.code === customCurrencyCode);
 
     const handleSelectContact = contact => {
         setSelectedContact(contact);
@@ -404,7 +426,7 @@ export const AddTransactionScreen = () => {
 
             setForm({
                 amount: '',
-                currency: 'PKR',
+                currency: selectedCurrency || '',
                 date: formatDisplayDate(nextDefaultLoanDate),
                 dueDate: '',
                 monthlyPaymentDay: '',
@@ -835,14 +857,38 @@ export const AddTransactionScreen = () => {
 
                         <View className="mt-5">
                             <AppInput
-                                helperText="Search by currency code"
+                                autoCapitalize="characters"
+                                autoCorrect={false}
+                                helperText="Enter any 3-letter currency code"
                                 isFocused={false}
-                                onChangeText={setCurrencyQuery}
-                                placeholder="Search currency"
+                                maxLength={3}
+                                onChangeText={value =>
+                                    setCurrencyQuery(normalizeCurrencyCode(value))
+                                }
+                                placeholder="Example: SAR"
                                 value={currencyQuery}
                                 variant="filled"
                             />
                         </View>
+
+                        {canUseCustomCurrency ? (
+                            <Pressable
+                                className="mt-4 rounded-2xl border border-primary-500 bg-primary-500 px-4 py-4"
+                                hitSlop={4}
+                                onPress={() =>
+                                    handleSelectCurrency({
+                                        code: customCurrencyCode,
+                                        label: 'Custom currency code',
+                                    })
+                                }>
+                                <Text className="text-body font-semibold text-white">
+                                    Use {customCurrencyCode}
+                                </Text>
+                                <Text className="mt-1 text-caption font-normal text-white/80">
+                                    Add this currency to the transaction
+                                </Text>
+                            </Pressable>
+                        ) : null}
 
                         {filteredCurrencyOptions.length ? (
                             <ScrollView
@@ -879,10 +925,10 @@ export const AddTransactionScreen = () => {
                         ) : (
                             <View className="mt-5 rounded-2xl bg-surface px-4 py-5">
                                 <Text className="text-body font-semibold text-textPrimary">
-                                    No currency found
+                                    Enter a 3-letter currency code
                                 </Text>
                                 <Text className="mt-1 text-caption font-normal text-textSecondary">
-                                    Try a different search term.
+                                    Example: SAR, INR, CAD, JPY or any other valid code.
                                 </Text>
                             </View>
                         )}

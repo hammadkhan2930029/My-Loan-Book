@@ -13,7 +13,9 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 }));
 
 import {
+  getBaseCurrency,
   getSelectedCurrency,
+  saveBaseCurrency,
   saveSelectedCurrency,
 } from '../src/services/currencyStorage';
 
@@ -26,6 +28,12 @@ describe('currency storage', () => {
     await saveSelectedCurrency('USD');
 
     await expect(getSelectedCurrency()).resolves.toBe('USD');
+  });
+
+  test('persists and restores base currency', async () => {
+    await saveBaseCurrency('SAR');
+
+    await expect(getBaseCurrency()).resolves.toBe('SAR');
   });
 
   test('clears persisted currency when selection is empty', async () => {

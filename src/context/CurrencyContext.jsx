@@ -8,7 +8,9 @@ import React, {
 } from 'react';
 
 import {
+  getBaseCurrency,
   getSelectedCurrency,
+  saveBaseCurrency,
   saveSelectedCurrency,
 } from '@/services/currencyStorage';
 import {
@@ -19,14 +21,17 @@ import {
 } from '@/utils/currency';
 
 const CurrencyContext = createContext({
+  baseCurrency: null,
   selectedCurrency: null,
   availableCurrencies: [],
   isCurrencyReady: false,
+  setBaseCurrency: () => {},
   selectCurrency: () => {},
   syncAvailableCurrencies: () => {},
 });
 
 export const CurrencyProvider = ({children}) => {
+  const [baseCurrency, setBaseCurrencyState] = useState(null);
   const [selectedCurrency, setSelectedCurrency] = useState(null);
   const [availableCurrencies, setAvailableCurrencies] = useState([]);
   const [isCurrencyReady, setIsCurrencyReady] = useState(false);
@@ -36,10 +41,17 @@ export const CurrencyProvider = ({children}) => {
 
     const restoreCurrency = async () => {
       try {
-        const savedCurrency = await getSelectedCurrency();
+        const [savedBaseCurrency, savedCurrency] = await Promise.all([
+          getBaseCurrency(),
+          getSelectedCurrency(),
+        ]);
 
         if (isMounted) {
-          setSelectedCurrency(savedCurrency);
+          setBaseCurrencyState(savedBaseCurrency);
+          setSelectedCurrency(savedBaseCurrency || savedCurrency);
+          setAvailableCurrencies(
+            savedBaseCurrency ? [savedBaseCurrency] : [],
+          );
         }
       } finally {
         if (isMounted) {
@@ -55,6 +67,20 @@ export const CurrencyProvider = ({children}) => {
     };
   }, []);
 
+  const setBaseCurrency = useCallback(currency => {
+    const normalizedCurrency = normalizeCurrency(currency);
+
+    setBaseCurrencyState(normalizedCurrency);
+    setSelectedCurrency(normalizedCurrency);
+    setAvailableCurrencies(currentCurrencies =>
+      normalizeCurrencies([normalizedCurrency, ...currentCurrencies]),
+    );
+    Promise.all([
+      saveBaseCurrency(normalizedCurrency),
+      saveSelectedCurrency(normalizedCurrency),
+    ]).catch(() => {});
+  }, []);
+
   const selectCurrency = useCallback(currency => {
     const normalizedCurrency = normalizeCurrency(currency);
 
@@ -64,7 +90,10 @@ export const CurrencyProvider = ({children}) => {
 
   const syncAvailableCurrencies = useCallback(
     (currencies, serverSelectedCurrency = null) => {
-      const normalizedCurrencies = normalizeCurrencies(currencies);
+      const normalizedCurrencies = normalizeCurrencies([
+        baseCurrency,
+        ...(Array.isArray(currencies) ? currencies : []),
+      ]);
       const normalizedServerCurrency = normalizeCurrency(
         serverSelectedCurrency,
       );
@@ -78,7 +107,8 @@ export const CurrencyProvider = ({children}) => {
         const nextCurrency = resolveSelectedCurrency({
           availableCurrencies: normalizedCurrencies,
           currentCurrency,
-          serverSelectedCurrency: normalizedServerCurrency,
+          serverSelectedCurrency:
+            normalizedServerCurrency || baseCurrency,
         });
 
         if (nextCurrency !== currentCurrency) {
@@ -88,20 +118,24 @@ export const CurrencyProvider = ({children}) => {
         return nextCurrency;
       });
     },
-    [],
+    [baseCurrency],
   );
 
   const value = useMemo(
     () => ({
+      baseCurrency,
       selectedCurrency,
       availableCurrencies,
       isCurrencyReady,
+      setBaseCurrency,
       selectCurrency,
       syncAvailableCurrencies,
     }),
     [
       availableCurrencies,
+      baseCurrency,
       isCurrencyReady,
+      setBaseCurrency,
       selectCurrency,
       selectedCurrency,
       syncAvailableCurrencies,

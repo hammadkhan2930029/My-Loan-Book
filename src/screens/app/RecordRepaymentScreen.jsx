@@ -130,10 +130,6 @@ export const RecordRepaymentScreen = () => {
         contactsResult?.availableCurrencies,
         contactsResult?.selectedCurrency || contactResult?.selectedCurrency,
       );
-      setForm(current => ({
-        ...current,
-        currency: contactResult?.selectedCurrency || selectedCurrency || '',
-      }));
     } catch (error) {
       setContact(null);
       setTransactions([]);
@@ -151,6 +147,13 @@ export const RecordRepaymentScreen = () => {
   useEffect(() => {
     loadContact();
   }, [loadContact]);
+
+  useEffect(() => {
+    setForm(current => ({
+      ...current,
+      currency: selectedCurrency || '',
+    }));
+  }, [selectedCurrency]);
 
   const calendarDays = useMemo(() => buildCalendarDays(calendarMonth), [calendarMonth]);
   const summary = useMemo(

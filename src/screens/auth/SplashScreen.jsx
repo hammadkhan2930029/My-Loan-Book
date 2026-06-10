@@ -5,6 +5,7 @@ import {useNavigation} from '@react-navigation/native';
 
 import {APP_LOGO, APP_NAME, APP_TAGLINE} from '@/constants/app';
 import {ROUTES} from '@/navigation';
+import {getBaseCurrency} from '@/services/currencyStorage';
 import {cn} from '@/utils/cn';
 import {delay} from '@/utils/delay';
 
@@ -134,14 +135,20 @@ export const SplashScreen = () => {
     dotsLoop.start();
     loadingLoop.start();
 
-    const moveToLogin = async () => {
+    const moveToNextScreen = async () => {
       await delay(2400);
       if (isMounted) {
-        navigation.replace(ROUTES.LOGIN);
+        const baseCurrency = await getBaseCurrency();
+
+        if (isMounted) {
+          navigation.replace(
+            baseCurrency ? ROUTES.LOGIN : ROUTES.BASE_CURRENCY,
+          );
+        }
       }
     };
 
-    moveToLogin();
+    moveToNextScreen();
 
     return () => {
       isMounted = false;

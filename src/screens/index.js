@@ -15,6 +15,7 @@ export * from './app/ReportsScreen';
 export * from './app/TermsAndConditionsScreen';
 export * from './app/TransactionHistoryScreen';
 export * from './auth/ForgotPasswordScreen';
+export * from './auth/BaseCurrencyScreen';
 export * from './auth/LoginScreen';
 export * from './auth/OtpVerificationScreen';
 export * from './auth/RegisterScreen';

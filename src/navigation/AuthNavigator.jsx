@@ -2,6 +2,7 @@ import React from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
 import {
+  BaseCurrencyScreen,
   ForgotPasswordScreen,
   LoginScreen,
   OtpVerificationScreen,
@@ -21,6 +22,7 @@ export const AuthNavigator = () => {
       initialRouteName={ROUTES.SPLASH}
       screenOptions={defaultStackScreenOptions}>
       <Stack.Screen component={SplashScreen} name={ROUTES.SPLASH} />
+      <Stack.Screen component={BaseCurrencyScreen} name={ROUTES.BASE_CURRENCY} />
       <Stack.Screen component={LoginScreen} name={ROUTES.LOGIN} />
       <Stack.Screen component={RegisterScreen} name={ROUTES.REGISTER} />
       <Stack.Screen component={OtpVerificationScreen} name={ROUTES.OTP_VERIFICATION} />

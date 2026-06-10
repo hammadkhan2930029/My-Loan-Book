@@ -6,11 +6,11 @@ import { getAuthSession } from './authStorage';
 // 1. For local testing on a physical mobile, replace the LAN IP below with your computer's IP,
 //    then uncomment `LOCAL_API_BASE_URL` below and comment `LIVE_API_BASE_URL`.
 // 2. For production/live backend, uncomment `LIVE_API_BASE_URL` below and comment `LOCAL_API_BASE_URL`.
-// const LOCAL_API_BASE_URL = 'http://192.168.18.10:5000/api';
-const LIVE_API_BASE_URL = 'http://187.127.114.29/api';
+const LOCAL_API_BASE_URL = 'http://192.168.18.10:5000/api';
+// const LIVE_API_BASE_URL = 'http://187.127.114.29/api';
 
-// const API_BASE_URL = LOCAL_API_BASE_URL;
-const API_BASE_URL = LIVE_API_BASE_URL;
+const API_BASE_URL = LOCAL_API_BASE_URL;
+// const API_BASE_URL = LIVE_API_BASE_URL;
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
