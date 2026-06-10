@@ -134,8 +134,19 @@ export const mapTransactionToContactRow = transaction => ({
   type: transaction.type,
 });
 
-export const summarizeTransactions = transactions =>
-  transactions.reduce(
+export const summarizeTransactions = (transactions, selectedCurrency = null) => {
+  const normalizedSelectedCurrency = String(selectedCurrency || '')
+    .trim()
+    .toUpperCase();
+  const filteredTransactions = normalizedSelectedCurrency
+    ? transactions.filter(
+        transaction =>
+          String(transaction?.currency || 'PKR').trim().toUpperCase() ===
+          normalizedSelectedCurrency,
+      )
+    : transactions;
+
+  return filteredTransactions.reduce(
     (summary, transaction) => {
       if (transaction.status === 'pending') {
         if (transaction.category === 'repayment') {
@@ -179,9 +190,13 @@ export const summarizeTransactions = transactions =>
       remainingToPay: 0,
       remainingToReceive: 0,
       repaid: 0,
-      currency: transactions[0]?.currency || 'PKR',
+      currency:
+        normalizedSelectedCurrency ||
+        filteredTransactions[0]?.currency ||
+        '',
     },
   );
+};
 
 export const formatLedgerAmount = (amount, currency = 'PKR') =>
   formatCurrencyValue(amount, currency);

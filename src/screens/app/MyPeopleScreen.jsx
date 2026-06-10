@@ -13,6 +13,7 @@ import {
   AppListState,
   AppLoader,
 } from '@/components/ui';
+import {useCurrency} from '@/context/CurrencyContext';
 import {ROUTES} from '@/navigation';
 import {addContactByRegCode, getContacts} from '@/services/contactApi';
 
@@ -23,8 +24,12 @@ const formatContact = contact => ({
   contactUserId: contact?.contactUserId,
   name: contact?.fullName || 'Unknown Contact',
   imageUri: contact?.profilePhoto,
-  summary: 'Ready for ledger',
-  balance: 'PKR 0',
+  summary: contact?.currencyWiseSummary?.[contact?.selectedCurrency]
+    ? 'Selected currency balance'
+    : 'No transactions found for selected currency',
+  balance: `${contact?.selectedCurrency || ''} ${
+    contact?.summary?.remainingBalance || 0
+  }`.trim(),
   balanceType: 'gave',
   variant: 'primary',
 });
@@ -37,6 +42,11 @@ const normalizeRegCodeInput = value =>
 
 export const MyPeopleScreen = () => {
   const navigation = useNavigation();
+  const {
+    isCurrencyReady,
+    selectedCurrency,
+    syncAvailableCurrencies,
+  } = useCurrency();
   const [contacts, setContacts] = useState([]);
   const [query, setQuery] = useState('');
   const [regCode, setRegCode] = useState('');
@@ -48,12 +58,22 @@ export const MyPeopleScreen = () => {
   const [isAdding, setIsAdding] = useState(false);
 
   const loadContacts = useCallback(async () => {
+    if (!isCurrencyReady) {
+      return;
+    }
+
     setIsLoading(true);
     setFormError('');
 
     try {
-      const result = await getContacts();
+      const result = await getContacts({
+        currency: selectedCurrency,
+      });
       setContacts(Array.isArray(result?.contacts) ? result.contacts : []);
+      syncAvailableCurrencies(
+        result?.availableCurrencies,
+        result?.selectedCurrency,
+      );
     } catch (error) {
       const errorMessage = error.message || 'Could not load contacts.';
 
@@ -61,7 +81,11 @@ export const MyPeopleScreen = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [
+    isCurrencyReady,
+    selectedCurrency,
+    syncAvailableCurrencies,
+  ]);
 
   useFocusEffect(
     useCallback(() => {
@@ -100,7 +124,10 @@ export const MyPeopleScreen = () => {
     setIsAdding(true);
 
     try {
-      const result = await addContactByRegCode({regCode: normalizedRegCode});
+      const result = await addContactByRegCode({
+        currency: selectedCurrency,
+        regCode: normalizedRegCode,
+      });
       const successMessage = `${result.contact.fullName} added to your contacts.`;
 
       setRegCode('');

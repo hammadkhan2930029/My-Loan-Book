@@ -10,6 +10,7 @@ import {
   AppListState,
   AppLoader,
 } from '@/components/ui';
+import {useCurrency} from '@/context/CurrencyContext';
 import {getTransactions} from '@/services/transactionApi';
 import {mapTransactionToHistoryRow} from '@/utils/transactions';
 
@@ -18,6 +19,11 @@ import {TransactionHistoryRow} from './components';
 const filters = ['All', 'Gave', 'Took'];
 
 export const TransactionHistoryScreen = () => {
+  const {
+    isCurrencyReady,
+    selectedCurrency,
+    syncAvailableCurrencies,
+  } = useCurrency();
   const [activeFilter, setActiveFilter] = useState('All');
   const [query, setQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -26,18 +32,42 @@ export const TransactionHistoryScreen = () => {
   const [errorMessage, setErrorMessage] = useState('');
 
   const loadTransactions = useCallback(async () => {
+    if (!isCurrencyReady) {
+      return;
+    }
+
     setIsLoading(true);
     setErrorMessage('');
 
     try {
-      const result = await getTransactions();
-      setTransactions(Array.isArray(result?.transactions) ? result.transactions : []);
+      const result = await getTransactions({
+        currency: selectedCurrency,
+      });
+      setTransactions(
+        Array.isArray(result?.transactions)
+          ? result.transactions.filter(
+              transaction =>
+                !selectedCurrency ||
+                String(transaction?.currency || 'PKR')
+                  .trim()
+                  .toUpperCase() === selectedCurrency,
+            )
+          : [],
+      );
+      syncAvailableCurrencies(
+        result?.availableCurrencies,
+        result?.selectedCurrency,
+      );
     } catch (error) {
       setErrorMessage(error.message || 'Could not load transactions.');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [
+    isCurrencyReady,
+    selectedCurrency,
+    syncAvailableCurrencies,
+  ]);
 
   useFocusEffect(
     useCallback(() => {
@@ -147,9 +177,9 @@ export const TransactionHistoryScreen = () => {
           ) : !transactions.length ? (
             <AppListState
               actionLabel="Create Transaction"
-              description="New transaction records will appear here once you start tracking them."
+              description="No transactions found for selected currency"
               mode="empty"
-              title="No transactions yet"
+              title="No transactions found"
             />
           ) : formattedTransactions.length ? (
             <AppCard padding="sm">

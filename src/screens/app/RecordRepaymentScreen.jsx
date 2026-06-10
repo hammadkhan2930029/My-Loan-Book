@@ -14,9 +14,10 @@ import {
   AppListState,
   AppLoader,
 } from '@/components/ui';
+import {useCurrency} from '@/context/CurrencyContext';
 import {ROUTES} from '@/navigation';
-import {getContact} from '@/services/contactApi';
-import {createRepaymentRequest, getTransactions} from '@/services/transactionApi';
+import {getContact, getContacts} from '@/services/contactApi';
+import {createRepaymentRequest} from '@/services/transactionApi';
 import {
   formatAmountInput,
   formatLedgerAmount,
@@ -24,28 +25,6 @@ import {
   unformatAmountInput,
 } from '@/utils/transactions';
 
-const currencyOptions = [
-  {code: 'PKR', label: 'Pakistani Rupee'},
-  {code: 'USD', label: 'US Dollar'},
-  {code: 'SAR', label: 'Saudi Riyal'},
-  {code: 'AED', label: 'UAE Dirham'},
-  {code: 'EUR', label: 'Euro'},
-  {code: 'GBP', label: 'British Pound'},
-  {code: 'INR', label: 'Indian Rupee'},
-  {code: 'CNY', label: 'Chinese Yuan'},
-  {code: 'JPY', label: 'Japanese Yen'},
-  {code: 'CAD', label: 'Canadian Dollar'},
-  {code: 'AUD', label: 'Australian Dollar'},
-  {code: 'CHF', label: 'Swiss Franc'},
-  {code: 'TRY', label: 'Turkish Lira'},
-  {code: 'QAR', label: 'Qatari Riyal'},
-  {code: 'KWD', label: 'Kuwaiti Dinar'},
-  {code: 'OMR', label: 'Omani Rial'},
-  {code: 'BHD', label: 'Bahraini Dinar'},
-  {code: 'MYR', label: 'Malaysian Ringgit'},
-  {code: 'SGD', label: 'Singapore Dollar'},
-  {code: 'THB', label: 'Thai Baht'},
-];
 const dayLabels = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
 const formatDisplayDate = value =>
@@ -84,8 +63,15 @@ export const RecordRepaymentScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const contactId = route.params?.contactId;
+  const {
+    isCurrencyReady,
+    selectedCurrency,
+    selectCurrency,
+    syncAvailableCurrencies,
+  } = useCurrency();
   const [contact, setContact] = useState(null);
   const [transactions, setTransactions] = useState([]);
+  const [contactCurrencies, setContactCurrencies] = useState([]);
   const [isLoadingContact, setIsLoadingContact] = useState(true);
   const [focusedField, setFocusedField] = useState('');
   const [formError, setFormError] = useState('');
@@ -99,13 +85,17 @@ export const RecordRepaymentScreen = () => {
   const [attachmentPreview, setAttachmentPreview] = useState({name: ''});
   const [form, setForm] = useState({
     amount: '',
-    currency: 'PKR',
+    currency: selectedCurrency || '',
     date: '',
     note: '',
     attachment: '',
   });
 
   const loadContact = useCallback(async () => {
+    if (!isCurrencyReady) {
+      return;
+    }
+
     if (!contactId) {
       setFormError('Contact is missing.');
       return;
@@ -113,14 +103,37 @@ export const RecordRepaymentScreen = () => {
 
     setIsLoadingContact(true);
     try {
-      const [contactResult, transactionsResult] = await Promise.all([
-        getContact(contactId),
-        getTransactions({contactId}),
+      const [contactResult, contactsResult] = await Promise.all([
+        getContact(contactId, {currency: selectedCurrency}),
+        getContacts({currency: selectedCurrency}),
       ]);
+      const nextContactCurrencies = Array.isArray(
+        contactResult?.availableCurrencies,
+      )
+        ? contactResult.availableCurrencies
+        : [];
+
       setContact(contactResult?.contact || null);
       setTransactions(
-        Array.isArray(transactionsResult?.transactions) ? transactionsResult.transactions : [],
+        Array.isArray(contactResult?.transactions)
+          ? contactResult.transactions.filter(
+              transaction =>
+                !selectedCurrency ||
+                String(transaction?.currency || 'PKR')
+                  .trim()
+                  .toUpperCase() === selectedCurrency,
+            )
+          : [],
       );
+      setContactCurrencies(nextContactCurrencies);
+      syncAvailableCurrencies(
+        contactsResult?.availableCurrencies,
+        contactsResult?.selectedCurrency || contactResult?.selectedCurrency,
+      );
+      setForm(current => ({
+        ...current,
+        currency: contactResult?.selectedCurrency || selectedCurrency || '',
+      }));
     } catch (error) {
       setContact(null);
       setTransactions([]);
@@ -128,7 +141,12 @@ export const RecordRepaymentScreen = () => {
     } finally {
       setIsLoadingContact(false);
     }
-  }, [contactId]);
+  }, [
+    contactId,
+    isCurrencyReady,
+    selectedCurrency,
+    syncAvailableCurrencies,
+  ]);
 
   useEffect(() => {
     loadContact();
@@ -136,14 +154,22 @@ export const RecordRepaymentScreen = () => {
 
   const calendarDays = useMemo(() => buildCalendarDays(calendarMonth), [calendarMonth]);
   const summary = useMemo(
-    () => summarizeTransactions(Array.isArray(transactions) ? transactions : []),
-    [transactions],
+    () =>
+      summarizeTransactions(
+        Array.isArray(transactions) ? transactions : [],
+        selectedCurrency,
+      ),
+    [selectedCurrency, transactions],
   );
   const outstandingAmount = summary.remainingToPay;
   const pendingRepaymentAmount = summary.pendingRepaymentSent;
 
   const filteredCurrencyOptions = useMemo(() => {
     const normalizedQuery = currencyQuery.trim().toLowerCase();
+    const currencyOptions = contactCurrencies.map(code => ({
+      code,
+      label: code,
+    }));
 
     if (!normalizedQuery) {
       return currencyOptions;
@@ -153,9 +179,10 @@ export const RecordRepaymentScreen = () => {
       currency.code.toLowerCase().includes(normalizedQuery) ||
       currency.label.toLowerCase().includes(normalizedQuery),
     );
-  }, [currencyQuery]);
+  }, [contactCurrencies, currencyQuery]);
 
   const handleSelectCurrency = currency => {
+    selectCurrency(currency.code);
     setForm(current => ({...current, currency: currency.code}));
     setCurrencyQuery('');
     setIsCurrencyPickerOpen(false);
@@ -392,6 +419,14 @@ export const RecordRepaymentScreen = () => {
               </View>
             </View>
           </AppCard>
+        ) : null}
+
+        {contact && !transactions.length ? (
+          <AppListState
+            description="No transactions found for selected currency"
+            mode="empty"
+            title="No transactions found"
+          />
         ) : null}
 
         <AppCard variant="elevated">

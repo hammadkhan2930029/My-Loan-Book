@@ -4,6 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppBadge, AppCard, AppListItem, AppListState, AppLoader } from '@/components/ui';
+import { useCurrency } from '@/context/CurrencyContext';
 import { getReports } from '@/services/reportsApi';
 
 const months = [
@@ -39,15 +40,18 @@ const formatMonthLabel = month =>
 const buildYearOptions = currentYear =>
     [currentYear - 2, currentYear - 1, currentYear, currentYear + 1];
 
-const buildSummaryTiles = summary => [
-    {
+const buildSummaryTiles = (summary, selectedCurrency) => {
+    const currency = summary?.currency || selectedCurrency || '';
+    const zeroValue = `${currency} 0`.trim();
+
+    return [{
         accent: 'bg-primary-500',
         key: 'loans_given',
         note: summary?.loanGivenCount
             ? `${summary.loanGivenCount} lending entries synced`
             : 'No lending entries yet',
         title: 'Loans Given',
-        value: summary?.loansGiven || 'PKR 0',
+        value: summary?.loansGiven || zeroValue,
     },
     {
         accent: 'bg-[#2f7d62]',
@@ -56,7 +60,7 @@ const buildSummaryTiles = summary => [
             ? `${summary.returnedToMeCount} returned entries synced`
             : 'No returned entries yet',
         title: 'Returned To Me',
-        value: summary?.returnedToMe || 'PKR 0',
+        value: summary?.returnedToMe || zeroValue,
     },
     {
         accent: 'bg-accent-400',
@@ -65,7 +69,7 @@ const buildSummaryTiles = summary => [
             ? `${summary.loansTakenCount} borrowing entries synced`
             : 'No borrowing entries yet',
         title: 'Loans Taken',
-        value: summary?.loansTaken || 'PKR 0',
+        value: summary?.loansTaken || zeroValue,
     },
     {
         accent: 'bg-[#cb5a36]',
@@ -74,11 +78,17 @@ const buildSummaryTiles = summary => [
             ? `${summary.repaidByMeCount} repayment entries synced`
             : 'No repayment entries yet',
         title: 'Repaid By Me',
-        value: summary?.repaidByMe || 'PKR 0',
+        value: summary?.repaidByMe || zeroValue,
     },
-];
+    ];
+};
 
 export const ReportsScreen = () => {
+    const {
+        isCurrencyReady,
+        selectedCurrency,
+        syncAvailableCurrencies,
+    } = useCurrency();
     const currentYear = useMemo(() => new Date().getFullYear(), []);
     const yearOptions = useMemo(() => buildYearOptions(currentYear), [currentYear]);
     const [selectedYear, setSelectedYear] = useState(currentYear);
@@ -89,22 +99,35 @@ export const ReportsScreen = () => {
     const [errorMessage, setErrorMessage] = useState('');
 
     const loadReports = useCallback(async ({ month, year }) => {
+        if (!isCurrencyReady) {
+            return;
+        }
+
         setIsLoading(true);
         setErrorMessage('');
 
         try {
             const result = await getReports({
+                currency: selectedCurrency,
                 ...(month ? { month } : {}),
                 year,
             });
             setReports(result?.reports || {});
+            syncAvailableCurrencies(
+                result?.availableCurrencies,
+                result?.selectedCurrency,
+            );
         } catch (error) {
             setReports(null);
             setErrorMessage(error.message || 'Could not load reports.');
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [
+        isCurrencyReady,
+        selectedCurrency,
+        syncAvailableCurrencies,
+    ]);
 
     useFocusEffect(
         useCallback(() => {
@@ -156,7 +179,10 @@ export const ReportsScreen = () => {
     const tookPercentage = chartTotal > 0
         ? Math.min((summary.rawLoansTaken / chartTotal) * 100, 100)
         : 0;
-    const summaryTiles = useMemo(() => buildSummaryTiles(summary), [summary]);
+    const summaryTiles = useMemo(
+        () => buildSummaryTiles(summary, selectedCurrency),
+        [selectedCurrency, summary],
+    );
     const filteredHistory = useMemo(() => {
         const nextItems = historyBuckets[activeBreakdown] || historyBuckets.all || [];
         return Array.isArray(nextItems) ? nextItems : [];
@@ -402,9 +428,9 @@ export const ReportsScreen = () => {
 
                             {!history.length ? (
                                 <AppListState
-                                    description="No reportable transactions were found for this period."
+                                    description="No transactions found for selected currency"
                                     mode="empty"
-                                    title="No report data"
+                                    title="No transactions found"
                                 />
                             ) : !filteredHistory.length ? (
                                 <AppListState

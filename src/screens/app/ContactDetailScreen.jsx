@@ -12,12 +12,12 @@ import {
     AppListState,
     AppLoader,
 } from '@/components/ui';
+import { useCurrency } from '@/context/CurrencyContext';
 import { ROUTES } from '@/navigation';
-import { getContact } from '@/services/contactApi';
+import { getContact, getContacts } from '@/services/contactApi';
 import {
     approveRepaymentRequest,
     confirmLoanRequest,
-    getTransactions,
     rejectLoanRequest,
 } from '@/services/transactionApi';
 import {
@@ -32,6 +32,11 @@ export const ContactDetailScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
     const contactId = route.params?.contactId;
+    const {
+        isCurrencyReady,
+        selectedCurrency,
+        syncAvailableCurrencies,
+    } = useCurrency();
     const [contact, setContact] = useState(null);
     const [transactions, setTransactions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -39,6 +44,10 @@ export const ContactDetailScreen = () => {
     const [approvingTransactionId, setApprovingTransactionId] = useState('');
 
     const loadContact = useCallback(async () => {
+        if (!isCurrencyReady) {
+            return;
+        }
+
         if (!contactId) {
             const missingContactMessage = 'Contact ID is missing.';
 
@@ -61,13 +70,28 @@ export const ContactDetailScreen = () => {
         setErrorMessage('');
 
         try {
-            const [contactResult, transactionsResult] = await Promise.all([
-                getContact(contactId),
-                getTransactions({ contactId }),
+            const [contactResult, contactsResult] = await Promise.all([
+                getContact(contactId, { currency: selectedCurrency }),
+                getContacts({ currency: selectedCurrency }),
             ]);
 
             setContact(contactResult?.contact || null);
-            setTransactions(Array.isArray(transactionsResult?.transactions) ? transactionsResult.transactions : []);
+            setTransactions(
+                Array.isArray(contactResult?.transactions)
+                    ? contactResult.transactions.filter(
+                        transaction =>
+                            !selectedCurrency ||
+                            String(transaction?.currency || 'PKR')
+                                .trim()
+                                .toUpperCase() === selectedCurrency,
+                    )
+                    : [],
+            );
+            syncAvailableCurrencies(
+                contactsResult?.availableCurrencies,
+                contactsResult?.selectedCurrency ||
+                    contactResult?.selectedCurrency,
+            );
         } catch (error) {
             const loadErrorMessage = error.message || 'Could not load contact.';
 
@@ -87,7 +111,12 @@ export const ContactDetailScreen = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [contactId]);
+    }, [
+        contactId,
+        isCurrencyReady,
+        selectedCurrency,
+        syncAvailableCurrencies,
+    ]);
 
     useFocusEffect(
         useCallback(() => {
@@ -97,7 +126,7 @@ export const ContactDetailScreen = () => {
 
     const contactName = contact?.fullName || 'Contact';
     const safeTransactions = Array.isArray(transactions) ? transactions : [];
-    const summary = summarizeTransactions(safeTransactions);
+    const summary = summarizeTransactions(safeTransactions, selectedCurrency);
     const formattedTransactions = safeTransactions.map(mapTransactionToContactRow);
     const hasReceivableBalance = summary.remainingToReceive > 0;
     const hasPayableBalance = summary.remainingToPay > 0;
@@ -515,9 +544,9 @@ export const ContactDetailScreen = () => {
 
                             {!formattedTransactions.length ? (
                                 <AppListState
-                                    description="Create the first transaction to start this contact ledger."
+                                    description="No transactions found for selected currency"
                                     mode="empty"
-                                    title="No transactions yet"
+                                    title="No transactions found"
                                 />
                             ) : (
                                 <AppCard padding="sm">

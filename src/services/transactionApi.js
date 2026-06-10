@@ -1,10 +1,11 @@
 import {apiRequest} from './apiClient';
 
-export const getTransactions = ({contactId, type} = {}) =>
+export const getTransactions = ({contactId, currency, type} = {}) =>
   apiRequest('/transactions', {
     method: 'GET',
     params: {
       ...(contactId ? {contactId} : {}),
+      ...(currency ? {currency} : {}),
       ...(type ? {type} : {}),
     },
   });

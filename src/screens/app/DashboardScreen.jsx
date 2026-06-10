@@ -6,10 +6,12 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import Toast from 'react-native-toast-message';
 
 import { AppButton, AppCard, AppListState, AppLoader } from '@/components/ui';
+import { useCurrency } from '@/context/CurrencyContext';
 import { ROUTES, useAuth } from '@/navigation';
 import { getContacts } from '@/services/contactApi';
 import { getDashboard } from '@/services/dashboardApi';
 import { getNotifications, markNotificationAsRead } from '@/services/notificationApi';
+import { getAdjacentCurrency } from '@/utils/currency';
 import {
     approveRepaymentRequest,
     confirmLoanRequest,
@@ -87,6 +89,13 @@ const notificationTheme = {
 export const DashboardScreen = () => {
     const navigation = useNavigation();
     const { session } = useAuth();
+    const {
+        availableCurrencies,
+        isCurrencyReady,
+        selectedCurrency,
+        selectCurrency,
+        syncAvailableCurrencies,
+    } = useCurrency();
     const profile = session?.user || {};
     const profileName = profile.fullName || 'Digital Loan Tracker User';
     const firstName = profileName.split(' ').filter(Boolean)[0] || profileName;
@@ -99,14 +108,22 @@ export const DashboardScreen = () => {
     const [errorMessage, setErrorMessage] = useState('');
 
     const loadDashboard = useCallback(async () => {
+        if (!isCurrencyReady) {
+            return;
+        }
+
         setIsLoading(true);
         setErrorMessage('');
 
         try {
             const [dashboardResult, notificationsResult, contactsResult] = await Promise.all([
-                getDashboard(),
+                getDashboard({
+                    currency: selectedCurrency,
+                }),
                 getNotifications(),
-                getContacts(),
+                getContacts({
+                    currency: selectedCurrency,
+                }),
             ]);
             const nextNotifications = Array.isArray(notificationsResult?.data)
                 ? notificationsResult.data
@@ -118,6 +135,10 @@ export const DashboardScreen = () => {
             setDashboard(dashboardResult?.dashboard || {});
             setNotifications(nextNotifications);
             setNotificationContacts(nextContacts);
+            syncAvailableCurrencies(
+                dashboardResult?.availableCurrencies,
+                dashboardResult?.selectedCurrency,
+            );
         } catch (error) {
             const nextErrorMessage = error.message || 'Could not load dashboard data.';
 
@@ -138,7 +159,11 @@ export const DashboardScreen = () => {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [
+        isCurrencyReady,
+        selectedCurrency,
+        syncAvailableCurrencies,
+    ]);
 
     useFocusEffect(
         useCallback(() => {
@@ -195,6 +220,23 @@ export const DashboardScreen = () => {
             },
         ];
     }, [summary]);
+
+    const handleCurrencySwipe = useCallback(
+        direction => {
+            if (availableCurrencies.length <= 1) {
+                return;
+            }
+
+            selectCurrency(
+                getAdjacentCurrency({
+                    availableCurrencies,
+                    direction,
+                    selectedCurrency,
+                }),
+            );
+        },
+        [availableCurrencies, selectCurrency, selectedCurrency],
+    );
 
     const refreshHeaderBadge = useCallback(() => {
         navigation.setParams({
@@ -426,7 +468,15 @@ export const DashboardScreen = () => {
 
                         <View className="flex-row items-end gap-3">
                             {summaryCards.length ? (
-                                summaryCards.map(card => <DashboardSummaryCard key={card.id} {...card} />)
+                                summaryCards.map(card => (
+                                    <DashboardSummaryCard
+                                        key={card.id}
+                                        {...card}
+                                        currency={selectedCurrency}
+                                        isCurrencySwipeEnabled={availableCurrencies.length > 1}
+                                        onCurrencySwipe={handleCurrencySwipe}
+                                    />
+                                ))
                             ) : (
                                 <AppCard className="flex-1 rounded-[22px] bg-surface px-4 py-5" padding="sm">
                                     <Text className="text-caption font-normal text-textSecondary">
@@ -437,6 +487,35 @@ export const DashboardScreen = () => {
                                 </AppCard>
                             )}
                         </View>
+
+                        {availableCurrencies.length > 1 ? (
+                            <ScrollView
+                                horizontal
+                                contentContainerClassName="gap-2"
+                                showsHorizontalScrollIndicator={false}>
+                                {availableCurrencies.map(currency => {
+                                    const isSelected = currency === selectedCurrency;
+
+                                    return (
+                                        <Pressable
+                                            key={currency}
+                                            className={`rounded-full border px-4 py-2 ${
+                                                isSelected
+                                                    ? 'border-primary-500 bg-primary-500'
+                                                    : 'border-border bg-surface'
+                                            }`}
+                                            onPress={() => selectCurrency(currency)}>
+                                            <Text
+                                                className={`text-caption font-semibold ${
+                                                    isSelected ? 'text-white' : 'text-textSecondary'
+                                                }`}>
+                                                {currency}
+                                            </Text>
+                                        </Pressable>
+                                    );
+                                })}
+                            </ScrollView>
+                        ) : null}
 
                         {summary ? (
                             <AppCard className="rounded-[22px] bg-surface px-4 py-5" padding="sm">
@@ -661,10 +740,10 @@ export const DashboardScreen = () => {
                             ) : (
                                 <AppListState
                                     actionLabel="Refresh"
-                                    description="Recent activity will appear here after transactions are loaded."
+                                    description="No transactions found for selected currency"
                                     mode="empty"
                                     onActionPress={loadDashboard}
-                                    title="No recent activity"
+                                    title="No transactions found"
                                 />
                             )}
                         </View>

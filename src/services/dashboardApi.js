@@ -1,6 +1,9 @@
 import {apiRequest} from './apiClient';
 
-export const getDashboard = () =>
+export const getDashboard = ({currency} = {}) =>
   apiRequest('/dashboard', {
     method: 'GET',
+    params: {
+      ...(currency ? {currency} : {}),
+    },
   });

@@ -6,14 +6,17 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
 import { toastConfig } from './src/components/ui';
+import { CurrencyProvider } from './src/context/CurrencyContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
 
 const App = () => {
   return (
     <SafeAreaProvider>
-      <StatusBar backgroundColor="#f6f8fb" barStyle="dark-content" />
-      <RootNavigator />
-      <Toast config={toastConfig} />
+      <CurrencyProvider>
+        <StatusBar backgroundColor="#f6f8fb" barStyle="dark-content" />
+        <RootNavigator />
+        <Toast config={toastConfig} />
+      </CurrencyProvider>
     </SafeAreaProvider>
   );
 };
