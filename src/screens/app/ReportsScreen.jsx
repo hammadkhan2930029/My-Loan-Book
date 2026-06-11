@@ -169,15 +169,25 @@ export const ReportsScreen = () => {
     const isYearView = selectedMonth === 0;
     const selectedMonthLabel = formatMonthLabel(selectedMonth);
     const selectedPeriodLabel = isYearView ? `${selectedYear}` : `${selectedMonthLabel} ${selectedYear}`;
-    const chartTotal = useMemo(
-        () => (summary ? summary.rawLoansGiven + summary.rawLoansTaken : 0),
-        [summary],
-    );
-    const gavePercentage = chartTotal > 0
-        ? Math.min((summary.rawLoansGiven / chartTotal) * 100, 100)
-        : 0;
-    const tookPercentage = chartTotal > 0
-        ? Math.min((summary.rawLoansTaken / chartTotal) * 100, 100)
+    const lendingSnapshot =
+        reports?.lendingSnapshot && typeof reports.lendingSnapshot === 'object'
+            ? reports.lendingSnapshot
+            : {
+                people: [],
+                totals: {
+                    loanCount: 0,
+                    loaned: `${selectedCurrency || ''} 0`.trim(),
+                    peopleCount: 0,
+                    remaining: `${selectedCurrency || ''} 0`.trim(),
+                    returned: `${selectedCurrency || ''} 0`.trim(),
+                },
+            };
+    const lendingTotals = lendingSnapshot.totals || {};
+    const recoveryPercentage = lendingTotals.loanedAmount > 0
+        ? Math.min(
+            (lendingTotals.returnedAmount / lendingTotals.loanedAmount) * 100,
+            100,
+        )
         : 0;
     const summaryTiles = useMemo(
         () => buildSummaryTiles(summary, selectedCurrency),
@@ -271,16 +281,6 @@ export const ReportsScreen = () => {
                             </ScrollView>
                         </View>
 
-                        {isYearView ? (
-                            <View className="rounded-[24px] border border-dashed border-borderStrong bg-surfaceMuted px-4 py-4">
-                                <Text className="text-body font-semibold text-textPrimary">
-                                    Full-year mode UI is ready
-                                </Text>
-                                <Text className="mt-1 text-caption font-normal text-textSecondary">
-                                    Once you say the word, we will wire the backend so selecting a year without a month loads annual totals, annual history, and repayment-specific breakdowns.
-                                </Text>
-                            </View>
-                        ) : null}
                     </View>
                 </AppCard>
 
@@ -310,68 +310,66 @@ export const ReportsScreen = () => {
                                         </Text>
                                         <Text className="mt-2 text-caption font-normal text-textSecondary">
                                             {isYearView
-                                                ? `This layout is prepared for ${selectedYear} annual finance movement. Current values still reflect the synced month until backend filters are connected.`
-                                                : `Distribution of money given and money taken in ${selectedMonthLabel}.`}
+                                                ? `Loans given during ${selectedYear}, their returned amount, and the balance still outstanding.`
+                                                : `Loans given in ${selectedMonthLabel}, how much has been returned, and how much is still outstanding.`}
                                         </Text>
                                     </View>
-                                    <AppBadge label={summary.totalEntries ? 'Active' : 'Quiet'} variant="primary" />
-                                </View>
-
-                                <View className="items-center py-2">
-                                    <Text className="text-caption font-normal text-textSecondary">
-                                        {isYearView ? 'Selected Year' : 'Monthly Total'}
-                                    </Text>
-                                    <Text className="mt-2 text-title font-bold tracking-[-0.3px] text-textPrimary">
-                                        {summary.totalDisplay}
-                                    </Text>
-                                    <Text className="mt-2 text-caption font-normal text-textMuted">
-                                        Gave vs Took
-                                    </Text>
-                                </View>
-
-                                <View className="gap-3">
-                                    <View className="h-4 flex-row overflow-hidden rounded-full bg-surfaceMuted">
-                                        {gavePercentage > 0 ? (
-                                            <View
-                                                className="h-full bg-primary-500"
-                                                style={{width: `${gavePercentage}%`}}
-                                            />
-                                        ) : null}
-                                        {tookPercentage > 0 ? (
-                                            <View
-                                                className="h-full bg-accent-400"
-                                                style={{width: `${tookPercentage}%`}}
-                                            />
-                                        ) : null}
-                                    </View>
-                                    <View className="flex-row items-center justify-between">
-                                        <View className="flex-row items-center gap-2">
-                                            <View className="h-2.5 w-2.5 rounded-full bg-primary-500" />
-                                            <Text className="text-caption font-normal text-textSecondary">
-                                                Gave {Math.round(gavePercentage)}%
-                                            </Text>
-                                        </View>
-                                        <View className="flex-row items-center gap-2">
-                                            <View className="h-2.5 w-2.5 rounded-full bg-accent-400" />
-                                            <Text className="text-caption font-normal text-textSecondary">
-                                                Took {Math.round(tookPercentage)}%
-                                            </Text>
-                                        </View>
-                                    </View>
+                                    <AppBadge
+                                        label={lendingTotals.loanCount ? 'Active' : 'Quiet'}
+                                        variant="primary"
+                                    />
                                 </View>
 
                                 <View className="flex-row gap-4">
                                     <View className="flex-1 rounded-2xl bg-primary-500 px-4 py-4">
-                                        <Text className="text-caption font-normal text-white/80">Current Synced Gave</Text>
+                                        <Text className="text-caption font-normal text-white/80">
+                                            Total Given
+                                        </Text>
                                         <Text className="mt-2 text-section font-semibold text-white">
-                                            {summary.loansGiven}
+                                            {lendingTotals.loaned}
                                         </Text>
                                     </View>
 
-                                    <View className="flex-1 rounded-2xl bg-accent-400 px-4 py-4">
-                                        <Text className="text-caption font-normal text-white/80">Current Synced Took</Text>
+                                    <View className="flex-1 rounded-2xl bg-[#2f7d62] px-4 py-4">
+                                        <Text className="text-caption font-normal text-white/80">
+                                            Returned
+                                        </Text>
                                         <Text className="mt-2 text-section font-semibold text-white">
-                                            {summary.loansTaken}
+                                            {lendingTotals.returned}
+                                        </Text>
+                                    </View>
+                                </View>
+
+                                <View className="rounded-2xl bg-surfaceMuted px-4 py-4">
+                                    <View className="flex-row items-center justify-between gap-3">
+                                        <View>
+                                            <Text className="text-caption font-normal text-textSecondary">
+                                                Remaining To Receive
+                                            </Text>
+                                            <Text className="mt-2 text-section font-semibold text-textPrimary">
+                                                {lendingTotals.remaining}
+                                            </Text>
+                                        </View>
+                                        <AppBadge
+                                            label={`${lendingTotals.peopleCount || 0} People`}
+                                            variant="accent"
+                                        />
+                                    </View>
+                                </View>
+
+                                <View className="gap-3">
+                                    <View className="h-3 overflow-hidden rounded-full bg-surfaceMuted">
+                                        <View
+                                            className="h-full rounded-full bg-[#2f7d62]"
+                                            style={{width: `${recoveryPercentage}%`}}
+                                        />
+                                    </View>
+                                    <View className="flex-row items-center justify-between">
+                                        <Text className="text-caption text-textSecondary">
+                                            Recovery progress
+                                        </Text>
+                                        <Text className="text-caption font-semibold text-textPrimary">
+                                            {Math.round(recoveryPercentage)}%
                                         </Text>
                                     </View>
                                 </View>

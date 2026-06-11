@@ -10,25 +10,14 @@ import {
   AppInput,
   AppLogo,
 } from '@/components/ui';
+import {
+  CURRENCY_OPTIONS,
+  filterCurrencyOptions,
+  normalizeCurrencyInput,
+} from '@/constants/currencies';
 import {useCurrency} from '@/context/CurrencyContext';
 import {ROUTES, useAuth} from '@/navigation';
 import {normalizeCurrency} from '@/utils/currency';
-
-const commonCurrencies = [
-  {code: 'PKR', label: 'Pakistani Rupee'},
-  {code: 'USD', label: 'US Dollar'},
-  {code: 'SAR', label: 'Saudi Riyal'},
-  {code: 'AED', label: 'UAE Dirham'},
-  {code: 'EUR', label: 'Euro'},
-  {code: 'GBP', label: 'British Pound'},
-  {code: 'INR', label: 'Indian Rupee'},
-];
-
-const normalizeCurrencyInput = value =>
-  String(value || '')
-    .replace(/[^a-zA-Z]/g, '')
-    .toUpperCase()
-    .slice(0, 3);
 
 export const BaseCurrencyScreen = () => {
   const navigation = useNavigation();
@@ -37,24 +26,15 @@ export const BaseCurrencyScreen = () => {
   const [query, setQuery] = useState('');
   const [selectedCode, setSelectedCode] = useState(baseCurrency || 'PKR');
 
-  const filteredCurrencies = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    if (!normalizedQuery) {
-      return commonCurrencies;
-    }
-
-    return commonCurrencies.filter(
-      currency =>
-        currency.code.toLowerCase().includes(normalizedQuery) ||
-        currency.label.toLowerCase().includes(normalizedQuery),
-    );
-  }, [query]);
+  const filteredCurrencies = useMemo(
+    () => filterCurrencyOptions(query),
+    [query],
+  );
 
   const customCode = normalizeCurrency(query);
   const canUseCustomCode =
     Boolean(customCode) &&
-    !commonCurrencies.some(currency => currency.code === customCode);
+    !CURRENCY_OPTIONS.some(currency => currency.code === customCode);
 
   const handleContinue = () => {
     const currency = normalizeCurrency(selectedCode);

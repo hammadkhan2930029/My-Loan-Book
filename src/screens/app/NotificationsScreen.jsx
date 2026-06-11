@@ -13,12 +13,12 @@ import {
   AppListState,
   AppLoader,
 } from '@/components/ui';
+import {useCurrency} from '@/context/CurrencyContext';
 import {ROUTES} from '@/navigation';
 import {getContacts} from '@/services/contactApi';
 import {
   getNotifications,
   markAllNotificationsAsRead,
-  markNotificationAsRead,
 } from '@/services/notificationApi';
 
 const formatRelativeTime = value => {
@@ -86,11 +86,11 @@ const notificationTheme = {
 
 export const NotificationsScreen = () => {
   const navigation = useNavigation();
+  const {selectCurrency} = useCurrency();
   const [notifications, setNotifications] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isMarkingAll, setIsMarkingAll] = useState(false);
-  const [markingId, setMarkingId] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
   const loadNotifications = useCallback(async () => {
@@ -155,6 +155,8 @@ export const NotificationsScreen = () => {
   const navigateFromNotification = useCallback(
     notification => {
       const senderContactId = contactIdByUserId[notification?.senderId];
+      const transactionCurrency =
+        notification?.transaction?.currency || notification?.loan?.currency;
 
       if (
         senderContactId &&
@@ -170,45 +172,21 @@ export const NotificationsScreen = () => {
           notification?.type,
         )
       ) {
+        if (transactionCurrency) {
+          selectCurrency(transactionCurrency);
+        }
+
         navigation.navigate(ROUTES.CONTACT_DETAIL, {
           contactId: senderContactId,
+          currency: transactionCurrency,
+          notificationId: notification?.id,
+          transactionId:
+            notification?.transactionId || notification?.transaction?.id,
         });
       }
     },
-    [contactIdByUserId, navigation],
+    [contactIdByUserId, navigation, selectCurrency],
   );
-
-  const handleMarkAsRead = async notificationId => {
-    const selectedNotification = notifications.find(item => item.id === notificationId);
-
-    if (!selectedNotification || selectedNotification.status === 'read') {
-      return;
-    }
-
-    setMarkingId(notificationId);
-
-    try {
-      await markNotificationAsRead(notificationId);
-      setNotifications(current =>
-        current.map(item =>
-          item.id === notificationId ? {...item, status: 'read'} : item,
-        ),
-      );
-      refreshHeaderBadge();
-      navigateFromNotification(selectedNotification);
-    } catch (error) {
-      Toast.show({
-        type: 'customToast',
-        text1: 'Error',
-        text2: error.message || 'Could not mark notification as read.',
-        props: {
-          borderColor: '#d95f70',
-        },
-      });
-    } finally {
-      setMarkingId('');
-    }
-  };
 
   const handleMarkAllAsRead = async () => {
     if (!visibleNotifications.length) {
@@ -256,7 +234,7 @@ export const NotificationsScreen = () => {
         className={`flex-row items-start gap-3 py-4 ${
           showDivider ? 'border-b border-border' : ''
         }`}
-        onPress={() => handleMarkAsRead(item.id)}>
+        onPress={() => navigateFromNotification(item)}>
         <View className={`h-12 w-12 items-center justify-center rounded-full ${theme.accent}`}>
           <Ionicons color="#ffffff" name={theme.icon} size={20} />
         </View>
@@ -280,7 +258,7 @@ export const NotificationsScreen = () => {
               <AppBadge label={isUnread ? 'Unread' : 'Read'} variant={isUnread ? 'accent' : 'neutral'} />
               {isUnread ? (
                 <Text className="text-caption font-semibold text-primary-500">
-                  {markingId === item.id ? 'Updating...' : 'Tap to read'}
+                  Tap to open
                 </Text>
               ) : null}
             </View>
@@ -308,7 +286,7 @@ export const NotificationsScreen = () => {
                     : 'All caught up'}
                 </Text>
                 <Text className="mt-2 text-caption font-normal text-white/80">
-                  Tap any notification to mark it as read. Read items are removed from this list.
+                  Open a notification to review it. Action alerts are removed after confirmation or rejection.
                 </Text>
               </View>
               <View className="h-12 w-12 items-center justify-center rounded-full bg-accent-400">

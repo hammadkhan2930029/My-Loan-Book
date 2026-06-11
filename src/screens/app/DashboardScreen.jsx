@@ -247,6 +247,8 @@ export const DashboardScreen = () => {
     const navigateFromNotification = useCallback(
         notification => {
             const senderContactId = contactIdByUserId[notification?.senderId];
+            const transactionCurrency =
+                notification?.transaction?.currency || notification?.loan?.currency;
 
             if (
                 senderContactId &&
@@ -260,23 +262,32 @@ export const DashboardScreen = () => {
                     'contact_added',
                 ].includes(notification?.type)
             ) {
+                if (transactionCurrency) {
+                    selectCurrency(transactionCurrency);
+                }
+
                 navigation.navigate(ROUTES.CONTACT_DETAIL, {
                     contactId: senderContactId,
+                    currency: transactionCurrency,
+                    notificationId: notification?.id,
+                    transactionId:
+                        notification?.transactionId || notification?.transaction?.id,
                 });
                 return;
             }
 
             navigation.navigate(ROUTES.NOTIFICATIONS);
         },
-        [contactIdByUserId, navigation],
+        [contactIdByUserId, navigation, selectCurrency],
     );
 
     const handleNotificationAction = async (notification, shouldNavigate) => {
-        if (!notification?.id || notification.status === 'read') {
-            if (shouldNavigate) {
-                navigateFromNotification(notification);
-            }
+        if (shouldNavigate) {
+            navigateFromNotification(notification);
+            return;
+        }
 
+        if (!notification?.id || notification.status === 'read') {
             return;
         }
 
@@ -290,10 +301,6 @@ export const DashboardScreen = () => {
                 ),
             );
             refreshHeaderBadge();
-
-            if (shouldNavigate) {
-                navigateFromNotification(notification);
-            }
         } catch (error) {
             Toast.show({
                 type: 'customToast',
@@ -332,6 +339,7 @@ export const DashboardScreen = () => {
                 },
             });
             await loadDashboard();
+            refreshHeaderBadge();
         } catch (error) {
             Toast.show({
                 type: 'customToast',

@@ -3,6 +3,11 @@ import {
   normalizeCurrencies,
   resolveSelectedCurrency,
 } from '../src/utils/currency';
+import {
+  CURRENCY_OPTIONS,
+  filterCurrencyOptions,
+  getCurrencyLabel,
+} from '../src/constants/currencies';
 
 describe('currency helpers', () => {
   test('normalizes and removes duplicate currencies', () => {
@@ -67,5 +72,15 @@ describe('currency helpers', () => {
         serverSelectedCurrency: null,
       }),
     ).toBeNull();
+  });
+
+  test('includes Gulf currencies and searches by country currency name', () => {
+    expect(CURRENCY_OPTIONS.map(currency => currency.code)).toEqual(
+      expect.arrayContaining(['SAR', 'AED', 'QAR', 'KWD', 'BHD', 'OMR']),
+    );
+    expect(filterCurrencyOptions('Qatari')).toEqual([
+      {code: 'QAR', label: 'Qatari Riyal'},
+    ]);
+    expect(getCurrencyLabel('KWD')).toBe('Kuwaiti Dinar');
   });
 });

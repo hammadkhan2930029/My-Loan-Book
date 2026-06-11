@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
@@ -19,6 +19,7 @@ import {
     approveRepaymentRequest,
     confirmLoanRequest,
     rejectLoanRequest,
+    rejectRepaymentRequest,
 } from '@/services/transactionApi';
 import {
     formatLedgerAmount,
@@ -32,9 +33,14 @@ export const ContactDetailScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
     const contactId = route.params?.contactId;
+    const targetTransactionId = route.params?.transactionId;
+    const routeCurrency = String(route.params?.currency || '')
+        .trim()
+        .toUpperCase();
     const {
         isCurrencyReady,
         selectedCurrency,
+        selectCurrency,
         syncAvailableCurrencies,
     } = useCurrency();
     const [contact, setContact] = useState(null);
@@ -43,8 +49,23 @@ export const ContactDetailScreen = () => {
     const [errorMessage, setErrorMessage] = useState('');
     const [approvingTransactionId, setApprovingTransactionId] = useState('');
 
+    const refreshHeaderBadge = useCallback(() => {
+        navigation.setParams({
+            notificationRefreshKey: Date.now(),
+        });
+    }, [navigation]);
+
+    useEffect(() => {
+        if (routeCurrency && routeCurrency !== selectedCurrency) {
+            selectCurrency(routeCurrency);
+        }
+    }, [routeCurrency, selectCurrency, selectedCurrency]);
+
     const loadContact = useCallback(async () => {
-        if (!isCurrencyReady) {
+        if (
+            !isCurrencyReady ||
+            (routeCurrency && routeCurrency !== selectedCurrency)
+        ) {
             return;
         }
 
@@ -114,6 +135,7 @@ export const ContactDetailScreen = () => {
     }, [
         contactId,
         isCurrencyReady,
+        routeCurrency,
         selectedCurrency,
         syncAvailableCurrencies,
     ]);
@@ -182,11 +204,44 @@ export const ContactDetailScreen = () => {
                 },
             });
             await loadContact();
+            refreshHeaderBadge();
         } catch (error) {
             Toast.show({
                 type: 'customToast',
                 text1: 'Error',
                 text2: error.message || 'Could not approve repayment.',
+                visibilityTime: 3500,
+                props: {
+                    bgColor: '#ffffff',
+                    borderColor: '#d95f70',
+                },
+            });
+        } finally {
+            setApprovingTransactionId('');
+        }
+    };
+
+    const handleRejectRepayment = async transactionId => {
+        setApprovingTransactionId(transactionId);
+
+        try {
+            await rejectRepaymentRequest(transactionId);
+            Toast.show({
+                type: 'customToast',
+                text1: 'Success',
+                text2: 'Repayment rejected successfully.',
+                props: {
+                    bgColor: '#ffffff',
+                    borderColor: 'green',
+                },
+            });
+            await loadContact();
+            refreshHeaderBadge();
+        } catch (error) {
+            Toast.show({
+                type: 'customToast',
+                text1: 'Error',
+                text2: error.message || 'Could not reject repayment.',
                 visibilityTime: 3500,
                 props: {
                     bgColor: '#ffffff',
@@ -509,7 +564,18 @@ export const ContactDetailScreen = () => {
                                         </Text>
                                     </View>
                                     {pendingRepaymentRequests.map(item => (
-                                        <View key={item.id} className="rounded-2xl bg-surfaceMuted px-4 py-4">
+                                        <View
+                                            key={item.id}
+                                            className={`rounded-2xl bg-surfaceMuted px-4 py-4 ${
+                                                item.id === targetTransactionId
+                                                    ? 'border-2 border-accent-400'
+                                                    : ''
+                                            }`}>
+                                            {item.id === targetTransactionId ? (
+                                                <Text className="mb-2 text-caption font-semibold text-accent-400">
+                                                    Selected notification
+                                                </Text>
+                                            ) : null}
                                             <Text className="text-body font-normal text-textPrimary">
                                                 {item.counterpartyName || 'This contact'} returned{' '}
                                                 {formatLedgerAmount(item.amount, item.currency)}
@@ -517,8 +583,17 @@ export const ContactDetailScreen = () => {
                                             <Text className="mt-1 text-caption font-normal text-textSecondary">
                                                 {item.note || 'No note added'}
                                             </Text>
-                                            <View className="mt-3">
+                                            <View className="mt-3 flex-row gap-3">
                                                 <AppButton
+                                                    fullWidth={false}
+                                                    label="Reject"
+                                                    loading={approvingTransactionId === item.id}
+                                                    onPress={() => handleRejectRepayment(item.id)}
+                                                    size="md"
+                                                    variant="secondary"
+                                                />
+                                                <AppButton
+                                                    fullWidth={false}
                                                     label="Confirm Repayment"
                                                     loading={approvingTransactionId === item.id}
                                                     onPress={() => handleApproveRepayment(item.id)}

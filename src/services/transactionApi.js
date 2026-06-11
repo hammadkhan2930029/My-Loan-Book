@@ -41,3 +41,8 @@ export const approveRepaymentRequest = transactionId =>
   apiRequest(`/transactions/${transactionId}/approve-repayment`, {
     method: 'PATCH',
   });
+
+export const rejectRepaymentRequest = transactionId =>
+  apiRequest(`/transactions/${transactionId}/reject`, {
+    method: 'PATCH',
+  });

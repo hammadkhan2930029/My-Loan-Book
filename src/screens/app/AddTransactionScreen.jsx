@@ -15,6 +15,11 @@ import {
     AppListState,
     AppLoader,
 } from '@/components/ui';
+import {
+    CURRENCY_OPTIONS,
+    filterCurrencyOptions,
+    normalizeCurrencyInput,
+} from '@/constants/currencies';
 import { useCurrency } from '@/context/CurrencyContext';
 import { ROUTES } from '@/navigation';
 import { getContacts } from '@/services/contactApi';
@@ -43,20 +48,6 @@ const monthOptions = Array.from({ length: 12 }, (_, month) => ({
 }));
 const currentYear = new Date().getFullYear();
 const yearOptions = Array.from({ length: 61 }, (_, index) => currentYear - 30 + index);
-const currencyOptions = [
-    { code: 'PKR', label: 'Pakistani Rupee' },
-    { code: 'USD', label: 'US Dollar' },
-    { code: 'SAR', label: 'Saudi Riyal' },
-    { code: 'AED', label: 'UAE Dirham' },
-    { code: 'EUR', label: 'Euro' },
-    { code: 'GBP', label: 'British Pound' },
-];
-const normalizeCurrencyCode = value =>
-    String(value || '')
-        .replace(/[^a-zA-Z]/g, '')
-        .toUpperCase()
-        .slice(0, 3);
-
 const formatDisplayDate = value =>
     new Intl.DateTimeFormat('en-US', {
         month: 'short',
@@ -181,21 +172,14 @@ export const AddTransactionScreen = () => {
         );
     }, [contactQuery, formattedContacts]);
 
-    const filteredCurrencyOptions = useMemo(() => {
-        const normalizedQuery = currencyQuery.trim().toLowerCase();
-
-        if (!normalizedQuery) {
-            return currencyOptions;
-        }
-
-        return currencyOptions.filter(currency =>
-            currency.code.toLowerCase().includes(normalizedQuery),
-        );
-    }, [currencyQuery]);
-    const customCurrencyCode = normalizeCurrencyCode(currencyQuery);
+    const filteredCurrencies = useMemo(
+        () => filterCurrencyOptions(currencyQuery),
+        [currencyQuery],
+    );
+    const customCurrencyCode = normalizeCurrencyInput(currencyQuery);
     const canUseCustomCurrency =
         customCurrencyCode.length === 3 &&
-        !currencyOptions.some(currency => currency.code === customCurrencyCode);
+        !CURRENCY_OPTIONS.some(currency => currency.code === customCurrencyCode);
 
     const handleSelectContact = contact => {
         setSelectedContact(contact);
@@ -863,7 +847,7 @@ export const AddTransactionScreen = () => {
                                 isFocused={false}
                                 maxLength={3}
                                 onChangeText={value =>
-                                    setCurrencyQuery(normalizeCurrencyCode(value))
+                                    setCurrencyQuery(normalizeCurrencyInput(value))
                                 }
                                 placeholder="Example: SAR"
                                 value={currencyQuery}
@@ -890,13 +874,13 @@ export const AddTransactionScreen = () => {
                             </Pressable>
                         ) : null}
 
-                        {filteredCurrencyOptions.length ? (
+                        {filteredCurrencies.length ? (
                             <ScrollView
                                 className="mt-5 max-h-[280px]"
                                 contentContainerClassName="gap-3"
                                 keyboardShouldPersistTaps="handled"
                                 showsVerticalScrollIndicator={false}>
-                                {filteredCurrencyOptions.map(currency => {
+                                {filteredCurrencies.map(currency => {
                                     const isSelected = currency.code === form.currency;
 
                                     return (

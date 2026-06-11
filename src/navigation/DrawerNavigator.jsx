@@ -5,9 +5,13 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import {AppAvatar} from '@/components/ui';
 import {
+  AboutUsScreen,
   DeveloperScreen,
   DisclaimerScreen,
+  OurAppsScreen,
   PrivacyPolicyScreen,
+  SupportScreen,
+  SuggestionScreen,
   TermsAndConditionsScreen,
 } from '@/screens';
 
@@ -53,6 +57,34 @@ const drawerMenuItems = [
     icon: 'person-outline',
     type: 'tab',
     target: ROUTES.PROFILE,
+  },
+  {
+    id: ROUTES.OUR_APPS,
+    label: 'Our Apps',
+    icon: 'grid-outline',
+    type: 'screen',
+    target: ROUTES.OUR_APPS,
+  },
+  {
+    id: ROUTES.SUPPORT,
+    label: 'Support',
+    icon: 'headset-outline',
+    type: 'screen',
+    target: ROUTES.SUPPORT,
+  },
+  {
+    id: ROUTES.SUGGESTION,
+    label: 'Suggestions',
+    icon: 'bulb-outline',
+    type: 'screen',
+    target: ROUTES.SUGGESTION,
+  },
+  {
+    id: ROUTES.ABOUT_US,
+    label: 'About Us',
+    icon: 'information-circle-outline',
+    type: 'screen',
+    target: ROUTES.ABOUT_US,
   },
   {
     id: ROUTES.PRIVACY_POLICY,
@@ -238,6 +270,10 @@ export const DrawerNavigator = () => {
         name={ROUTES.TERMS_AND_CONDITIONS}
       />
       <Drawer.Screen component={DisclaimerScreen} name={ROUTES.DISCLAIMER} />
+      <Drawer.Screen component={OurAppsScreen} name={ROUTES.OUR_APPS} />
+      <Drawer.Screen component={SupportScreen} name={ROUTES.SUPPORT} />
+      <Drawer.Screen component={SuggestionScreen} name={ROUTES.SUGGESTION} />
+      <Drawer.Screen component={AboutUsScreen} name={ROUTES.ABOUT_US} />
       <Drawer.Screen component={DeveloperScreen} name={ROUTES.DEVELOPER} />
     </Drawer.Navigator>
   );

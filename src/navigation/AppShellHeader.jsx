@@ -28,6 +28,10 @@ const titleMap = {
   [ROUTES.TERMS_AND_CONDITIONS]: 'Terms & Conditions',
   [ROUTES.DISCLAIMER]: 'Disclaimer',
   [ROUTES.DEVELOPER]: 'Developer',
+  [ROUTES.OUR_APPS]: 'Our Apps',
+  [ROUTES.SUPPORT]: 'Support',
+  [ROUTES.SUGGESTION]: 'Suggestions',
+  [ROUTES.ABOUT_US]: 'About Us',
 };
 
 const getDeepestRoute = route => {

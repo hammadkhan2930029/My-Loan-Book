@@ -14,6 +14,7 @@ import {
   AppListState,
   AppLoader,
 } from '@/components/ui';
+import {getCurrencyLabel} from '@/constants/currencies';
 import {useCurrency} from '@/context/CurrencyContext';
 import {ROUTES} from '@/navigation';
 import {getContact, getContacts} from '@/services/contactApi';
@@ -171,7 +172,7 @@ export const RecordRepaymentScreen = () => {
     const normalizedQuery = currencyQuery.trim().toLowerCase();
     const currencyOptions = contactCurrencies.map(code => ({
       code,
-      label: code,
+      label: getCurrencyLabel(code),
     }));
 
     if (!normalizedQuery) {
